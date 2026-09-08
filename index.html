@@ -3,7 +3,6 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Salvation</title>
 <meta name="description" content="성경의 말씀과 인문학·철학의 지혜로 삶의 근본을 비추는 서재. 설계·개발 김유빈(Yubin Kim).">
 <meta name="author" content="Yubin Kim (김유빈)">
 <meta name="theme-color" content="#3A141E">
@@ -18,19 +17,13 @@
 <link rel="icon" type="image/png" sizes="512x512" href="./icons/icon-512.png">
 <link rel="manifest" href="./manifest.webmanifest">
 <meta property="og:title" content="Salvation">
-<meta property="og:description" content="성경의 말씀과 인문학·철학의 지혜로 삶의 근본을 비추는 서재.">
+<meta property="og:description" content="말씀과 인문학이 만나는 자리 — 삶의 근본을 비추다.">
 <meta property="og:type" content="website">
-<style>
-  html{-webkit-text-size-adjust:100%}
-  body{margin:0}
-  header.top .row{padding-top:calc(12px + env(safe-area-inset-top,0px))}
-  .container{padding-bottom:calc(60px + env(safe-area-inset-bottom,0px))}
-</style>
-</head>
-<body>
+<title>Salvation</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 
 <style>
 :root{
@@ -304,31 +297,107 @@ footer .fnote{font-size:11.5px;line-height:1.66;color:var(--ink-3);font-weight:5
   .rv-vpill,.rv-verse,.rv-ref,.rv-continue{opacity:1}
 }
 
+/* ============ account button ============ */
+.top-actions{display:flex;align-items:center;gap:9px}
+.acct-btn{appearance:none;cursor:pointer;border:1px solid var(--line-2);background:var(--surface);color:var(--ink-2);font-family:var(--fu);font-size:13px;font-weight:700;padding:0 15px;height:38px;border-radius:999px;letter-spacing:-.01em;transition:all .15s;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.acct-btn:hover{border-color:var(--gold);color:var(--wine)}
+.acct-btn.in{background:var(--wine-soft);border-color:color-mix(in srgb,var(--wine) 30%,transparent);color:var(--wine)}
+
+/* ============ 내 말씀 서재 ============ */
+.saved-list{display:flex;flex-direction:column;gap:11px}
+.saved-item{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:15px;padding:16px 44px 16px 17px;box-shadow:var(--shadow)}
+.saved-kind{display:inline-block;font-family:var(--fu);font-size:10.5px;font-weight:700;letter-spacing:.04em;color:var(--gold);margin-bottom:7px;text-transform:uppercase}
+.saved-verse{font-family:var(--fs);font-weight:500;font-size:15.5px;line-height:1.56;color:var(--ink);letter-spacing:-.01em;word-break:keep-all;margin:0}
+.saved-ref{margin-top:9px;font-family:var(--fu);font-size:11.5px;font-weight:700;color:var(--wine)}
+.saved-x{position:absolute;top:12px;right:12px;appearance:none;cursor:pointer;border:none;background:transparent;color:var(--ink-3);font-size:14px;line-height:1;padding:5px;border-radius:8px;transition:color .15s,transform .15s}
+.saved-x:hover{color:var(--wine)}
+.saved-x:active{transform:scale(.85)}
+.saved-empty{text-align:center;color:var(--ink-3);font-size:13.5px;font-weight:500;line-height:1.7;padding:30px 18px;border:1px dashed var(--line-2);border-radius:15px;word-break:keep-all}
+
+/* ============ auth modal ============ */
+.auth-modal{position:fixed;inset:0;z-index:120;display:flex;align-items:center;justify-content:center;padding:22px;background:color-mix(in srgb,var(--hero-2) 64%,transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);opacity:0;visibility:hidden;transition:opacity .3s,visibility .3s}
+.auth-modal.open{opacity:1;visibility:visible}
+.auth-modal[hidden]{display:none}
+.auth-card{position:relative;width:100%;max-width:394px;background:var(--surface);border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow-lg);padding:34px 28px 28px}
+.auth-close{position:absolute;top:15px;right:15px;appearance:none;cursor:pointer;border:none;background:transparent;color:var(--ink-3);font-size:15px;padding:6px;border-radius:8px;transition:color .15s}
+.auth-close:hover{color:var(--ink)}
+.auth-brand{display:flex;align-items:center;justify-content:center;gap:9px;margin-bottom:7px}
+.auth-brand svg{width:15px;height:21px}
+.auth-brand span{font-family:var(--fs);font-weight:600;font-size:20px;color:var(--ink);letter-spacing:-.01em}
+.auth-lead{text-align:center;font-family:var(--fu);font-size:13px;color:var(--ink-3);margin:0 0 22px;font-weight:500;word-break:keep-all}
+.auth-tabs{display:flex;gap:5px;background:var(--surface-2);border-radius:12px;padding:4px;margin-bottom:18px}
+.auth-tab{flex:1;appearance:none;cursor:pointer;border:none;background:transparent;color:var(--ink-2);font-family:var(--fu);font-size:14px;font-weight:700;padding:10px;border-radius:9px;transition:all .16s}
+.auth-tab[aria-selected="true"]{background:var(--surface);color:var(--wine);box-shadow:var(--shadow)}
+.auth-form{display:flex;flex-direction:column;gap:10px}
+.auth-in{width:100%;border:1px solid var(--line-2);background:var(--ground);color:var(--ink);border-radius:12px;padding:14px 15px;font-family:inherit;font-size:15px;letter-spacing:-.01em;transition:border-color .15s}
+.auth-in::placeholder{color:var(--ink-3)}
+.auth-in:focus{outline:none;border-color:var(--gold)}
+.auth-in[hidden]{display:none}
+.auth-submit{margin-top:4px;width:100%;appearance:none;border:none;cursor:pointer;background:linear-gradient(180deg,var(--wine-2),var(--wine));color:var(--on-wine);font-family:var(--fu);font-size:15.5px;font-weight:700;padding:15px;border-radius:12px;letter-spacing:.01em;transition:filter .15s,transform .12s}
+.auth-submit:hover{filter:brightness(1.06)}
+.auth-submit:active{transform:scale(.985)}
+.auth-submit:disabled{opacity:.55;cursor:default}
+.auth-msg{min-height:17px;margin:13px 2px 0;text-align:center;font-family:var(--fu);font-size:12.5px;font-weight:600;line-height:1.55;word-break:keep-all}
+.auth-msg.err{color:var(--wine-2)}
+.auth-msg.ok{color:var(--gold)}
+.auth-switch{text-align:center;margin:14px 0 0;font-size:12.5px;color:var(--ink-3);font-weight:500}
+.auth-switch b{color:var(--wine);cursor:pointer;font-weight:700}
+#authAccount{text-align:center}
+
+/* ============ desktop density ============ */
+.hero-a,.hero-b{display:contents}
+@media (min-width:900px){
+  .container{max-width:1180px}
+  .top .row,footer .fin{max-width:1180px}
+  .hero-in{max-width:1180px;display:grid;grid-template-columns:1.05fr .95fr;gap:50px;align-items:center;padding:64px 22px 58px}
+  .hero-a,.hero-b{display:block}
+  .hero-b{align-self:center;padding-left:46px;border-left:1px solid var(--on-wine-line)}
+  .hero .hint{margin-top:0;margin-bottom:16px;font-size:13px}
+  .hero .lead{max-width:40ch}
+  .mind-chips{gap:9px}
+  .mchip{font-size:14px;padding:10px 16px}
+  .pair-grid{display:grid;grid-template-columns:1.08fr .92fr;gap:22px;align-items:start}
+  .dom-grid{grid-template-columns:repeat(4,1fr)}
+  .entries{display:block;column-count:2;column-gap:16px}
+  .entry{break-inside:avoid;margin-bottom:16px}
+  .result{max-width:880px;margin-left:auto;margin-right:auto}
+}
+@media (min-width:1300px){
+  .entries{column-count:3}
+}
 @media (max-width:420px){.dom-grid{grid-template-columns:1fr}}
 </style>
-
+</head>
+<body>
 <header class="top">
   <div class="row">
     <div class="brand">
       <svg viewBox="0 0 16 22" fill="none" aria-hidden="true"><path d="M8 1v20M2 7h12" stroke="var(--gold)" stroke-width="1.7" stroke-linecap="round"/></svg>
       <span class="nm">Salvation</span>
     </div>
-    <button class="tbtn" id="themeBtn" type="button" aria-label="밝기 전환">◐</button>
+    <div class="top-actions">
+      <button class="acct-btn" id="acctBtn" type="button">로그인</button>
+      <button class="tbtn" id="themeBtn" type="button" aria-label="밝기 전환">◐</button>
+    </div>
   </div>
 </header>
 
 <!-- HERO -->
 <section class="hero">
   <div class="hero-in">
-    <span class="eyebrow">말씀 · 인문 · 삶</span>
-    <h1 id="greet">지금, 어떤 마음이신가요?</h1>
-    <p class="lead">겪고 계신 상황을 조용히 적어주세요. 성경의 말씀과 인류가 쌓아온 인문학의 지혜로, 그 마음의 뿌리를 함께 비춰 드리겠습니다.</p>
-    <div class="ask">
-      <textarea id="askInput" placeholder="예) 투자에서 손실을 봐 마음이 무겁고 조급합니다&#10;예) 시험이 다가오는데 불안하고 집중이 되지 않습니다" aria-label="상황 입력"></textarea>
-      <button class="btn-primary" id="askBtn" type="button">말씀 받기</button>
+    <div class="hero-a">
+      <span class="eyebrow">말씀 · 인문 · 삶</span>
+      <h1 id="greet">지금, 어떤 마음이신가요?</h1>
+      <p class="lead">겪고 계신 상황을 조용히 적어주세요. 성경의 말씀과 인류가 쌓아온 인문학의 지혜로, 그 마음의 뿌리를 함께 비춰 드리겠습니다.</p>
+      <div class="ask">
+        <textarea id="askInput" placeholder="예) 투자에서 손실을 봐 마음이 무겁고 조급합니다&#10;예) 시험이 다가오는데 불안하고 집중이 되지 않습니다" aria-label="상황 입력"></textarea>
+        <button class="btn-primary" id="askBtn" type="button">말씀 받기</button>
+      </div>
     </div>
-    <p class="hint">이런 마음일 때, 눌러서 바로 받아보세요</p>
-    <div class="mind-chips" id="mindChips"></div>
+    <div class="hero-b">
+      <p class="hint">이런 마음일 때, 눌러서 바로 받아보세요</p>
+      <div class="mind-chips" id="mindChips"></div>
+    </div>
   </div>
 </section>
 
@@ -336,11 +405,17 @@ footer .fnote{font-size:11.5px;line-height:1.66;color:var(--ink-3);font-weight:5
   <!-- result -->
   <section class="result" id="result" hidden></section>
 
-  <!-- today -->
-  <section class="sec">
-    <div class="sec-head"><span class="eyebrow">Verse of the day</span><h2>오늘의 말씀</h2></div>
-    <div class="card today" id="today"></div>
-  </section>
+  <!-- today + 내 서재 (desktop 2-col) -->
+  <div class="pair-grid">
+    <section class="sec">
+      <div class="sec-head"><span class="eyebrow">Verse of the day</span><h2>오늘의 말씀</h2></div>
+      <div class="card today" id="today"></div>
+    </section>
+    <section class="sec" id="mylib">
+      <div class="sec-head"><span class="eyebrow">My library</span><h2>내 말씀 서재</h2><p class="sec-sub" id="mylibSub">간직한 말씀이 여기에 모입니다</p></div>
+      <div class="saved-list" id="savedList"></div>
+    </section>
+  </div>
 
   <!-- domains -->
   <section class="sec">
@@ -377,6 +452,33 @@ footer .fnote{font-size:11.5px;line-height:1.66;color:var(--ink-3);font-weight:5
     <p class="fnote">구절 인용은 한국어 성경 번역 전통을 따르며, 인접 학문의 통찰은 검증된 연구에 근거합니다. 조언은 실시간 생성이 아닌 검증된 큐레이션으로 제공됩니다.<br>본 서비스는 개인 창작 프로젝트이며, 특정 교회·기관의 공식 서비스가 아닙니다. © 2026 Yubin Kim.</p>
   </div>
 </footer>
+
+<!-- AUTH MODAL -->
+<div class="auth-modal" id="authModal" hidden>
+  <div class="auth-card" role="dialog" aria-modal="true" aria-label="계정">
+    <button class="auth-close" id="authClose" type="button" aria-label="닫기">✕</button>
+    <div class="auth-brand"><svg viewBox="0 0 16 22" fill="none" aria-hidden="true"><path d="M8 1v20M2 7h12" stroke="var(--gold)" stroke-width="1.7" stroke-linecap="round"/></svg><span>Salvation</span></div>
+    <div id="authLogin">
+      <p class="auth-lead">간직한 말씀을 어느 기기에서나.</p>
+      <div class="auth-tabs" id="authTabs">
+        <button class="auth-tab" data-mode="login" type="button" aria-selected="true">로그인</button>
+        <button class="auth-tab" data-mode="signup" type="button" aria-selected="false">회원가입</button>
+      </div>
+      <form class="auth-form" id="authForm">
+        <input class="auth-in" id="authName" type="text" placeholder="이름 (표시용)" autocomplete="name" hidden>
+        <input class="auth-in" id="authEmail" type="email" placeholder="이메일" autocomplete="email" required>
+        <input class="auth-in" id="authPw" type="password" placeholder="비밀번호 (6자 이상)" autocomplete="current-password" required>
+        <button class="auth-submit" id="authSubmit" type="submit">로그인</button>
+      </form>
+      <p class="auth-msg" id="authMsg"></p>
+      <p class="auth-switch" id="authSwitch"></p>
+    </div>
+    <div id="authAccount" hidden>
+      <p class="auth-lead" id="authHi"></p>
+      <button class="auth-submit" id="authLogout" type="button">로그아웃</button>
+    </div>
+  </div>
+</div>
 
 <!-- REVEAL RITUAL -->
 <div class="reveal" id="reveal" hidden>
@@ -583,8 +685,13 @@ const PHIL=[
  {sc:6,q:"믿음은 바라는 것들의 실상이요, 보이지 않는 것들의 증거니.",src:"히브리서 11:1 · 신앙의 정의",a:"이성이 멈추는 자리에서 믿음이 시작됩니다. 아는 것과 믿는 것은 서로를 배척하지 않습니다.",n:"키르케고르·파스칼·칸트 모두, 이성의 한계에서 신앙의 자리를 발견했습니다."}
 ];
 
-const LS_FAV="mg_fav_v1", LS_THEME="mg_theme_v1";
-let favs=load(LS_FAV,[]);
+const SB_URL="https://byehxiqenirrbtbbbkfw.supabase.co";
+const SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ5ZWh4aXFlbmlycmJ0YmJia2Z3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg4NDY2NTQsImV4cCI6MjEwNDQyMjY1NH0.3GEzhBl8d4XOdlBOcs94Id36ZgY5yTgMvdDgF4jUJOU";
+let sb=null;
+try{ if(window.supabase&&window.supabase.createClient) sb=window.supabase.createClient(SB_URL,SB_KEY); }catch(_){}
+let user=null, authMode="login";
+const LS_SAVED="salv_saved_v1", LS_THEME="mg_theme_v1", LS_FAV="mg_fav_v1";
+let SAVED=new Map();
 let activeDomain=0, onlyFav=false, query="";
 const lastShown={};
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
@@ -593,6 +700,138 @@ function save(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(_){}}
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
 function norm(t){return t.toLowerCase().replace(/\s+/g," ").trim();}
 function reduced(){return matchMedia("(prefers-reduced-motion:reduce)").matches;}
+
+/* ================= 말씀 저장 (save / library) ================= */
+function itemOfEntry(e){return{kind:"scripture",ref:e.r,verse:e.v,domain:DOMAINS[e.d-1].ko};}
+function itemOfPhil(p){return{kind:"wisdom",ref:p.src,verse:p.q,domain:SCHOOLS[p.sc-1]};}
+function keyOf(it){return it.kind+"§"+it.ref+"§"+it.verse;}
+function isSaved(it){return SAVED.has(keyOf(it));}
+function savedScriptureCount(){let n=0;SAVED.forEach(v=>{if(v.kind==="scripture")n++;});return n;}
+function saveLocal(){save(LS_SAVED,[...SAVED.values()]);}
+function loadSaved(){
+  SAVED=new Map();
+  const arr=load(LS_SAVED,null);
+  if(Array.isArray(arr)){arr.forEach(it=>{if(it&&it.ref&&it.verse){it.kind=it.kind||"scripture";SAVED.set(keyOf(it),it);}});}
+  else{ /* 이전 버전(즐겨찾기) 1회 이전 */
+    const old=load(LS_FAV,null);
+    if(Array.isArray(old)&&old.length){old.forEach(id=>{const e=E[id];if(e){const it=itemOfEntry(e);it.created_at=Date.now();SAVED.set(keyOf(it),it);}});if(SAVED.size)saveLocal();}
+  }
+}
+function toggleSave(it){
+  const k=keyOf(it), had=SAVED.has(k);
+  if(had)SAVED.delete(k);
+  else{ it.created_at=it.created_at||Date.now(); SAVED.set(k,it); }
+  saveLocal(); refreshSaveUI();
+  if(user&&sb){
+    (async()=>{try{
+      if(had)await sb.from("saved_verses").delete().eq("kind",it.kind).eq("ref",it.ref).eq("verse",it.verse);
+      else await sb.from("saved_verses").insert({user_id:user.id,kind:it.kind,ref:it.ref,verse:it.verse,domain:it.domain||null});
+    }catch(_){}})();
+  }
+}
+function refreshSaveUI(){paintFav();renderSaved();renderEntries();renderToday();renderPhil();}
+function renderSaved(){
+  const el=$("#savedList");if(!el)return;
+  const items=[...SAVED.values()].sort((a,b)=>(b.created_at||0)-(a.created_at||0));
+  const sub=$("#mylibSub");
+  if(!items.length){
+    el.innerHTML=`<div class="saved-empty">아직 간직한 말씀이 없습니다.<br>마음에 닿는 구절의 ♡를 눌러 이곳에 모아보세요.</div>`;
+    if(sub)sub.textContent=user?`${user_label()} 님의 서재`:"간직한 말씀이 여기에 모입니다";
+    return;
+  }
+  el.innerHTML=items.map((it,i)=>`<div class="saved-item">
+    <span class="saved-kind">${it.kind==="wisdom"?"인문학의 지혜":(it.domain?esc(it.domain):"말씀")}</span>
+    <p class="saved-verse">${esc(it.verse)}</p>
+    <p class="saved-ref">${esc(it.ref)}</p>
+    <button class="saved-x" type="button" aria-label="서재에서 빼기" data-i="${i}">✕</button>
+  </div>`).join("");
+  $$("#savedList .saved-x").forEach(b=>b.addEventListener("click",()=>{const it=items[+b.dataset.i];if(it)toggleSave(it);}));
+  if(sub)sub.textContent=user?`${user_label()} 님의 서재 · ${items.length}편`:`간직한 말씀 ${items.length}편 · 이 기기에 저장됨`;
+}
+
+/* ================= 계정 (Supabase auth) ================= */
+function user_label(){if(!user)return"로그인";const m=user.user_metadata||{};return m.name||m.full_name||(user.email?user.email.split("@")[0]:"내 계정");}
+function paintAcct(){const b=$("#acctBtn");if(!b)return;b.textContent=user?user_label():"로그인";b.classList.toggle("in",!!user);}
+function authMsgSet(t,cls){const m=$("#authMsg");if(!m)return;m.textContent=t||"";m.className="auth-msg"+(cls?(" "+cls):"");}
+function authErr(t){authMsgSet(t,"err");}
+function friendlyAuthErr(err){
+  const m=((err&&err.message)||"").toLowerCase();
+  if(m.includes("failed to fetch")||m.includes("networkerror")||m.includes("load failed")||(err&&err.name==="TypeError"))
+    return "이 미리보기에서는 로그인이 제한됩니다. 배포된 주소(GitHub Pages)에서 이용해 주세요.";
+  if(m.includes("invalid login"))return "이메일 또는 비밀번호가 올바르지 않습니다.";
+  if(m.includes("already registered")||m.includes("already been registered"))return "이미 가입된 이메일입니다. 로그인해 주세요.";
+  if(m.includes("email not confirmed"))return "이메일 인증이 필요합니다. 받은 메일함을 확인해 주세요.";
+  if(m.includes("password"))return "비밀번호는 6자 이상이어야 합니다.";
+  return (err&&err.message)?err.message:"문제가 발생했습니다. 잠시 후 다시 시도해 주세요.";
+}
+function authSetMode(mode){
+  authMode=mode;
+  $$("#authTabs .auth-tab").forEach(t=>t.setAttribute("aria-selected",String(t.dataset.mode===mode)));
+  $("#authName").hidden=mode!=="signup";
+  $("#authPw").setAttribute("autocomplete",mode==="signup"?"new-password":"current-password");
+  $("#authSubmit").textContent=mode==="signup"?"회원가입":"로그인";
+  $("#authSwitch").innerHTML=mode==="signup"
+    ? '이미 계정이 있으신가요? <b id="authSwitchBtn">로그인</b>'
+    : '아직 계정이 없으신가요? <b id="authSwitchBtn">회원가입</b>';
+  const sw=$("#authSwitchBtn");if(sw)sw.addEventListener("click",()=>authSetMode(mode==="signup"?"login":"signup"));
+  authMsgSet("");
+}
+function showLogin(){$("#authAccount").hidden=true;$("#authLogin").hidden=false;authSetMode(authMode);}
+function showAccount(){$("#authLogin").hidden=true;$("#authAccount").hidden=false;$("#authHi").innerHTML=`<b style="color:var(--wine)">${esc(user_label())}</b> 님, 환영합니다.<br>간직한 말씀이 이 계정에 안전하게 보관됩니다.`;}
+function openAuth(){const m=$("#authModal");if(user)showAccount();else showLogin();m.hidden=false;requestAnimationFrame(()=>m.classList.add("open"));if(!user)setTimeout(()=>{try{$("#authEmail").focus();}catch(_){}} ,150);}
+function closeAuth(){const m=$("#authModal");m.classList.remove("open");setTimeout(()=>{m.hidden=true;},300);}
+async function afterAuth(){paintAcct();authMsgSet("환영합니다.","ok");await pullCloud();setTimeout(closeAuth,700);}
+async function authSubmit(ev){
+  ev.preventDefault();
+  if(!sb){authErr("이 미리보기에서는 로그인이 제한됩니다. 배포된 주소(GitHub Pages)에서 이용해 주세요.");return;}
+  const email=$("#authEmail").value.trim(), pw=$("#authPw").value;
+  if(!email||pw.length<6){authErr("이메일과 6자 이상 비밀번호를 입력해 주세요.");return;}
+  const btn=$("#authSubmit");btn.disabled=true;authMsgSet("처리 중…","");
+  try{
+    if(authMode==="signup"){
+      const name=$("#authName").value.trim();
+      const {data,error}=await sb.auth.signUp({email,password:pw,options:{data:{name:name||email.split("@")[0]}}});
+      if(error)throw error;
+      if(data&&data.session){user=data.user;await afterAuth();}
+      else{authMsgSet("확인 메일을 보냈습니다. 메일 인증 후 로그인해 주세요.","ok");authSetMode("login");}
+    }else{
+      const {data,error}=await sb.auth.signInWithPassword({email,password:pw});
+      if(error)throw error;
+      user=data.user;await afterAuth();
+    }
+  }catch(err){authErr(friendlyAuthErr(err));}
+  finally{btn.disabled=false;}
+}
+async function doLogout(){try{if(sb)await sb.auth.signOut();}catch(_){}user=null;paintAcct();loadSaved();refreshSaveUI();closeAuth();}
+async function pullCloud(){
+  if(!(user&&sb))return;
+  try{
+    const locals=[...SAVED.values()];
+    const {data,error}=await sb.from("saved_verses").select("*");
+    if(error)throw error;
+    const cloud=new Map();
+    (data||[]).forEach(row=>{const it={kind:row.kind||"scripture",ref:row.ref,verse:row.verse,domain:row.domain,note:row.note,created_at:row.created_at?new Date(row.created_at).getTime():Date.now(),rid:row.id};cloud.set(keyOf(it),it);});
+    const toPush=locals.filter(it=>!cloud.has(keyOf(it)));
+    if(toPush.length){
+      try{await sb.from("saved_verses").insert(toPush.map(it=>({user_id:user.id,kind:it.kind,ref:it.ref,verse:it.verse,domain:it.domain||null})));}catch(_){}
+      toPush.forEach(it=>cloud.set(keyOf(it),it));
+    }
+    SAVED=cloud;saveLocal();refreshSaveUI();
+  }catch(_){}
+}
+async function initAuth(){
+  $("#acctBtn").addEventListener("click",openAuth);
+  $("#authClose").addEventListener("click",closeAuth);
+  $("#authModal").addEventListener("click",e=>{if(e.target.id==="authModal")closeAuth();});
+  $("#authForm").addEventListener("submit",authSubmit);
+  $("#authLogout").addEventListener("click",doLogout);
+  $$("#authTabs .auth-tab").forEach(t=>t.addEventListener("click",()=>authSetMode(t.dataset.mode)));
+  authSetMode("login");paintAcct();
+  if(sb){
+    try{const {data}=await sb.auth.getSession();if(data&&data.session){user=data.session.user;paintAcct();await pullCloud();}}catch(_){}
+    try{sb.auth.onAuthStateChange((_e,session)=>{user=session?session.user:null;paintAcct();});}catch(_){}
+  }
+}
 
 /* theme */
 function curTheme(){const e=document.documentElement.getAttribute("data-theme");return e?e:(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light");}
@@ -649,6 +888,7 @@ $("#rvContinue").addEventListener("click",()=>closeReveal(true));
 
 function renderResult(sit,vid){
   const e=E[vid],d=DOMAINS[e.d-1];
+  const eit=itemOfEntry(e), savedE=isSaved(eit);
   const others=sit.v.filter(x=>x!==vid).slice(0,3).map(x=>E[x]);
   const r=$("#result");r.className="result pop";
   r.innerHTML=`
@@ -663,14 +903,14 @@ function renderResult(sit,vid){
     <div class="insight"><div class="lbl">마음이 놓이는 근거 · 혜안</div><p>${esc(e.i)}</p></div>
     ${sit.p?`<div class="mirror"><div class="lbl">인문학의 거울 · The Mirror</div><p>${esc(sit.p)}</p></div>`:''}
     <div class="res-actions">
-      <button type="button" id="saveAdvice" class="${favs.includes(e.id)?'on':''}">${favs.includes(e.id)?'✦ 간직함':'♡ 이 말씀 간직'}</button>
+      <button type="button" id="saveAdvice" class="${savedE?'on':''}">${savedE?'✦ 간직함':'♡ 이 말씀 간직'}</button>
       <button type="button" id="againBtn">다른 말씀 보기</button>
       ${others.length?`<button type="button" id="moreBtn">관련 ${others.length}</button>`:''}
     </div>
     ${others.length?`<div class="more-verses" id="moreV" hidden>${others.map(o=>`<div class="mini-v"><div class="mt">${esc(o.v)}</div><div class="mr">${esc(o.r)}</div></div>`).join("")}</div>`:''}
   `;
   r.hidden=false;
-  const sa=$("#saveAdvice");sa.addEventListener("click",()=>{toggleFav(e.id);sa.className=favs.includes(e.id)?'on':'';sa.textContent=favs.includes(e.id)?'✦ 간직함':'♡ 이 말씀 간직';});
+  const sa=$("#saveAdvice");sa.addEventListener("click",()=>{toggleSave(eit);const on=isSaved(eit);sa.className=on?'on':'';sa.textContent=on?'✦ 간직함':'♡ 이 말씀 간직';});
   $("#againBtn").addEventListener("click",()=>openReveal(sit));
   const mb=$("#moreBtn");if(mb)mb.addEventListener("click",()=>{const m=$("#moreV");m.hidden=!m.hidden;mb.textContent=m.hidden?`관련 ${others.length}`:"접기";});
   setTimeout(()=>r.scrollIntoView({behavior:"smooth",block:"start"}),60);
@@ -688,7 +928,7 @@ function renderMindChips(){
 function dayIndex(){const n=new Date();const s=new Date(n.getFullYear(),0,0);return Math.floor((n-s)/86400000)%E.length;}
 let todayId=dayIndex();
 function renderToday(){
-  const e=E[todayId],d=DOMAINS[e.d-1],on=favs.includes(e.id);
+  const e=E[todayId],d=DOMAINS[e.d-1],on=isSaved(itemOfEntry(e));
   const dt=new Date().toLocaleDateString("ko-KR",{month:"long",day:"numeric",weekday:"long"});
   $("#today").innerHTML=`
     <div class="tl"><span class="date">${dt}</span><span class="badge">${d.ko}</span></div>
@@ -699,12 +939,11 @@ function renderToday(){
       <button type="button" id="todaySave" class="${on?'on':''}">${on?'✦ 간직함':'♡ 간직하기'}</button>
     </div>`;
   $("#todayMore").addEventListener("click",()=>{let n;do{n=Math.floor(Math.random()*E.length);}while(n===todayId&&E.length>1);todayId=n;renderToday();});
-  $("#todaySave").addEventListener("click",()=>{toggleFav(todayId);renderToday();});
+  $("#todaySave").addEventListener("click",()=>toggleSave(itemOfEntry(E[todayId])));
 }
 
-/* favorites */
-function toggleFav(id){const i=favs.indexOf(id);if(i>=0)favs.splice(i,1);else favs.push(id);save(LS_FAV,favs);paintFav();renderEntries();}
-function paintFav(){const t=$("#favToggle");t.setAttribute("aria-pressed",String(onlyFav));t.textContent=(onlyFav?"♥":"♡")+" 간직한 말씀"+(favs.length?` ${favs.length}`:"");}
+/* library filter */
+function paintFav(){const t=$("#favToggle");if(!t)return;const n=savedScriptureCount();t.setAttribute("aria-pressed",String(onlyFav));t.textContent=(onlyFav?"♥":"♡")+" 간직한 말씀"+(n?` ${n}`:"");}
 $("#favToggle").addEventListener("click",()=>{onlyFav=!onlyFav;paintFav();renderEntries();});
 
 /* domains */
@@ -725,11 +964,11 @@ function paintDom(){$$(".dom-card").forEach(el=>el.setAttribute("aria-pressed",S
 
 /* search + entries */
 $("#searchInput").addEventListener("input",e=>{query=norm(e.target.value);renderEntries();});
-function match(e){if(activeDomain&&e.d!==activeDomain)return false;if(onlyFav&&!favs.includes(e.id))return false;if(query){const h=norm(e.t+" "+e.v+" "+e.r+" "+e.a+" "+e.i+" "+DOMAINS[e.d-1].ko);if(!h.includes(query))return false;}return true;}
+function match(e){if(activeDomain&&e.d!==activeDomain)return false;if(onlyFav&&!isSaved(itemOfEntry(e)))return false;if(query){const h=norm(e.t+" "+e.v+" "+e.r+" "+e.a+" "+e.i+" "+DOMAINS[e.d-1].ko);if(!h.includes(query))return false;}return true;}
 function renderEntries(){
   const list=E.filter(match);$("#count").textContent=`${list.length}편`;
   if(!list.length){$("#entries").innerHTML=`<p class="empty">해당하는 말씀이 없습니다.<br>다른 주제나 검색어로 살펴보세요.</p>`;return;}
-  $("#entries").innerHTML=list.map(e=>{const d=DOMAINS[e.d-1],on=favs.includes(e.id);
+  $("#entries").innerHTML=list.map(e=>{const d=DOMAINS[e.d-1],on=isSaved(itemOfEntry(e));
     return `<article class="entry">
       <div class="etop"><span class="etag"><span class="rn">${d.n}</span>${d.ko}</span>
       <button class="star ${on?'on':''}" type="button" aria-pressed="${on}" aria-label="간직하기" data-id="${e.id}">${on?'★':'☆'}</button></div>
@@ -738,7 +977,7 @@ function renderEntries(){
       <div class="eblock"><div class="lbl">삶으로</div><p>${esc(e.a)}</p></div>
       <div class="eblock ins"><div class="lbl">혜안</div><p>${esc(e.i)}</p></div>
     </article>`;}).join("");
-  $$(".entry .star").forEach(s=>s.addEventListener("click",()=>toggleFav(+s.dataset.id)));
+  $$("#entries .star").forEach(s=>s.addEventListener("click",()=>toggleSave(itemOfEntry(E[+s.dataset.id]))));
 }
 
 /* init */
@@ -752,16 +991,19 @@ function renderSchoolChips(){
 }
 function renderPhil(){
   const list=PHIL.filter(p=>!activeSchool||p.sc===activeSchool);
-  $("#philList").innerHTML=list.map(p=>`<article class="entry phil">
-      <div class="etop"><span class="etag"><span class="rn">❋</span>${SCHOOLS[p.sc-1]}</span></div>
+  $("#philList").innerHTML=list.map(p=>{const it=itemOfPhil(p),on=isSaved(it);
+    return `<article class="entry phil">
+      <div class="etop"><span class="etag"><span class="rn">❋</span>${esc(SCHOOLS[p.sc-1])}</span>
+      <button class="star ${on?'on':''}" type="button" aria-pressed="${on}" aria-label="간직하기" data-pid="${PHIL.indexOf(p)}">${on?'★':'☆'}</button></div>
       <p class="vtext">“${esc(p.q)}”</p><p class="vref">${esc(p.src)}</p>
       <div class="div"></div>
       <div class="eblock"><div class="lbl">삶으로</div><p>${esc(p.a)}</p></div>
       <div class="eblock ins"><div class="lbl">깊이 보기</div><p>${esc(p.n)}</p></div>
-    </article>`).join("");
+    </article>`;}).join("");
+  $$("#philList .star").forEach(s=>s.addEventListener("click",()=>toggleSave(itemOfPhil(PHIL[+s.dataset.pid]))));
 }
 
-renderMindChips();renderToday();renderDomains();paintFav();renderEntries();renderSchoolChips();renderPhil();
+loadSaved();renderMindChips();renderToday();renderDomains();paintFav();renderEntries();renderSaved();renderSchoolChips();renderPhil();initAuth();
 </script>
 
 <script>
