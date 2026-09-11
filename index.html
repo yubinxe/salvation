@@ -3,7 +3,6 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Salvation</title>
 <meta name="description" content="성경의 말씀과 인문학·철학의 지혜로 삶의 근본을 비추는 서재. 설계·개발 김유빈(Yubin Kim).">
 <meta name="author" content="Yubin Kim (김유빈)">
 <meta name="theme-color" content="#3A141E">
@@ -18,19 +17,13 @@
 <link rel="icon" type="image/png" sizes="512x512" href="./icons/icon-512.png">
 <link rel="manifest" href="./manifest.webmanifest">
 <meta property="og:title" content="Salvation">
-<meta property="og:description" content="성경의 말씀과 인문학·철학의 지혜로 삶의 근본을 비추는 서재.">
+<meta property="og:description" content="말씀과 인문학이 만나는 자리 — 삶의 근본을 비추다.">
 <meta property="og:type" content="website">
-<style>
-  html{-webkit-text-size-adjust:100%}
-  body{margin:0}
-  header.top .row{padding-top:calc(12px + env(safe-area-inset-top,0px))}
-  .container{padding-bottom:calc(60px + env(safe-area-inset-bottom,0px))}
-</style>
-</head>
-<body>
+<title>Salvation</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 
 <style>
 :root{
@@ -304,31 +297,407 @@ footer .fnote{font-size:11.5px;line-height:1.66;color:var(--ink-3);font-weight:5
   .rv-vpill,.rv-verse,.rv-ref,.rv-continue{opacity:1}
 }
 
-@media (max-width:420px){.dom-grid{grid-template-columns:1fr}}
-</style>
+/* ============ account button ============ */
+.top-actions{display:flex;align-items:center;gap:9px}
+.acct-btn{appearance:none;cursor:pointer;border:1px solid var(--line-2);background:var(--surface);color:var(--ink-2);font-family:var(--fu);font-size:13px;font-weight:700;padding:0 15px;height:38px;border-radius:999px;letter-spacing:-.01em;transition:all .15s;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.acct-btn:hover{border-color:var(--gold);color:var(--wine)}
+.acct-btn.in{background:var(--wine-soft);border-color:color-mix(in srgb,var(--wine) 30%,transparent);color:var(--wine)}
 
+/* ============ 내 말씀 서재 ============ */
+.saved-list{display:flex;flex-direction:column;gap:11px}
+.saved-item{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:15px;padding:16px 44px 16px 17px;box-shadow:var(--shadow)}
+.saved-kind{display:inline-block;font-family:var(--fu);font-size:10.5px;font-weight:700;letter-spacing:.04em;color:var(--gold);margin-bottom:7px;text-transform:uppercase}
+.saved-verse{font-family:var(--fs);font-weight:500;font-size:15.5px;line-height:1.56;color:var(--ink);letter-spacing:-.01em;word-break:keep-all;margin:0}
+.saved-ref{margin-top:9px;font-family:var(--fu);font-size:11.5px;font-weight:700;color:var(--wine)}
+.saved-x{position:absolute;top:12px;right:12px;appearance:none;cursor:pointer;border:none;background:transparent;color:var(--ink-3);font-size:14px;line-height:1;padding:5px;border-radius:8px;transition:color .15s,transform .15s}
+.saved-x:hover{color:var(--wine)}
+.saved-x:active{transform:scale(.85)}
+.saved-empty{text-align:center;color:var(--ink-3);font-size:13.5px;font-weight:500;line-height:1.7;padding:30px 18px;border:1px dashed var(--line-2);border-radius:15px;word-break:keep-all}
+
+/* ============ auth modal ============ */
+.auth-modal{position:fixed;inset:0;z-index:120;display:flex;align-items:center;justify-content:center;padding:22px;background:color-mix(in srgb,var(--hero-2) 64%,transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);opacity:0;visibility:hidden;transition:opacity .3s,visibility .3s}
+.auth-modal.open{opacity:1;visibility:visible}
+.auth-modal[hidden]{display:none}
+.auth-card{position:relative;width:100%;max-width:394px;background:var(--surface);border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow-lg);padding:34px 28px 28px}
+.auth-close{position:absolute;top:15px;right:15px;appearance:none;cursor:pointer;border:none;background:transparent;color:var(--ink-3);font-size:15px;padding:6px;border-radius:8px;transition:color .15s}
+.auth-close:hover{color:var(--ink)}
+.auth-brand{display:flex;align-items:center;justify-content:center;gap:9px;margin-bottom:7px}
+.auth-brand svg{width:15px;height:21px}
+.auth-brand span{font-family:var(--fs);font-weight:600;font-size:20px;color:var(--ink);letter-spacing:-.01em}
+.auth-lead{text-align:center;font-family:var(--fu);font-size:13px;color:var(--ink-3);margin:0 0 22px;font-weight:500;word-break:keep-all}
+.auth-tabs{display:flex;gap:5px;background:var(--surface-2);border-radius:12px;padding:4px;margin-bottom:18px}
+.auth-tab{flex:1;appearance:none;cursor:pointer;border:none;background:transparent;color:var(--ink-2);font-family:var(--fu);font-size:14px;font-weight:700;padding:10px;border-radius:9px;transition:all .16s}
+.auth-tab[aria-selected="true"]{background:var(--surface);color:var(--wine);box-shadow:var(--shadow)}
+.auth-form{display:flex;flex-direction:column;gap:10px}
+.auth-in{width:100%;border:1px solid var(--line-2);background:var(--ground);color:var(--ink);border-radius:12px;padding:14px 15px;font-family:inherit;font-size:15px;letter-spacing:-.01em;transition:border-color .15s}
+.auth-in::placeholder{color:var(--ink-3)}
+.auth-in:focus{outline:none;border-color:var(--gold)}
+.auth-in[hidden]{display:none}
+.auth-submit{margin-top:4px;width:100%;appearance:none;border:none;cursor:pointer;background:linear-gradient(180deg,var(--wine-2),var(--wine));color:var(--on-wine);font-family:var(--fu);font-size:15.5px;font-weight:700;padding:15px;border-radius:12px;letter-spacing:.01em;transition:filter .15s,transform .12s}
+.auth-submit:hover{filter:brightness(1.06)}
+.auth-submit:active{transform:scale(.985)}
+.auth-submit:disabled{opacity:.55;cursor:default}
+.auth-msg{min-height:17px;margin:13px 2px 0;text-align:center;font-family:var(--fu);font-size:12.5px;font-weight:600;line-height:1.55;word-break:keep-all}
+.auth-msg.err{color:var(--wine-2)}
+.auth-msg.ok{color:var(--gold)}
+.auth-switch{text-align:center;margin:14px 0 0;font-size:12.5px;color:var(--ink-3);font-weight:500}
+.auth-switch b{color:var(--wine);cursor:pointer;font-weight:700}
+#authAccount{text-align:center}
+
+/* ============ desktop density ============ */
+.hero-a,.hero-b{display:contents}
+@media (min-width:900px){
+  .container{max-width:1180px}
+  .top .row,footer .fin{max-width:1180px}
+  .hero-in{max-width:1180px;display:grid;grid-template-columns:1.05fr .95fr;gap:50px;align-items:center;padding:64px 22px 58px}
+  .hero-a,.hero-b{display:block}
+  .hero-b{align-self:center;padding-left:46px;border-left:1px solid var(--on-wine-line)}
+  .hero .hint{margin-top:0;margin-bottom:16px;font-size:13px}
+  .hero .lead{max-width:40ch}
+  .mind-chips{gap:9px}
+  .mchip{font-size:14px;padding:10px 16px}
+  .pair-grid{display:grid;grid-template-columns:1.08fr .92fr;gap:22px;align-items:start}
+  .dom-grid{grid-template-columns:repeat(4,1fr)}
+  .entries{display:block;column-count:2;column-gap:16px}
+  .entry{break-inside:avoid;margin-bottom:16px}
+  .result{max-width:880px;margin-left:auto;margin-right:auto}
+}
+@media (min-width:1300px){
+  .entries{column-count:3}
+}
+@media (max-width:420px){.dom-grid{grid-template-columns:1fr}}
+/* ============ 상담·문의 (CRM) ============ */
+.contact-card{position:relative;overflow:hidden;background:var(--surface);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);padding:26px 22px 24px}
+.contact-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--gold-2),var(--gold),transparent)}
+.contact-lead{font-family:var(--fu);font-size:13.5px;line-height:1.75;color:var(--ink-2);margin:0 0 18px;word-break:keep-all;letter-spacing:-.01em}
+.cf{display:grid;gap:10px}
+.cf-row{display:grid;gap:10px}
+@media (min-width:640px){.cf-row{grid-template-columns:1fr 1fr}}
+.cf-lab{display:block;font-family:var(--fu);font-size:11.5px;font-weight:700;letter-spacing:.12em;color:var(--ink-3);text-transform:uppercase;margin:6px 2px 4px}
+.cf-lab .req{color:var(--wine-2)}
+.cf-in,.cf-ta,.cf-sel{width:100%;border:1px solid var(--line-2);background:var(--ground);color:var(--ink);border-radius:12px;padding:13px 14px;font-family:var(--fu);font-size:14.5px;letter-spacing:-.01em;transition:border-color .15s,box-shadow .15s}
+.cf-ta{min-height:118px;resize:vertical;line-height:1.7;font-size:14.5px}
+.cf-sel{appearance:none;cursor:pointer;background-image:linear-gradient(45deg,transparent 50%,var(--ink-3) 50%),linear-gradient(135deg,var(--ink-3) 50%,transparent 50%);background-position:calc(100% - 18px) calc(50% + 1px),calc(100% - 13px) calc(50% + 1px);background-size:5px 5px,5px 5px;background-repeat:no-repeat;padding-right:38px}
+.cf-in::placeholder,.cf-ta::placeholder{color:var(--ink-3)}
+.cf-in:focus,.cf-ta:focus,.cf-sel:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px color-mix(in srgb,var(--gold) 16%,transparent)}
+.cf-chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:2px}
+.cchip{appearance:none;cursor:pointer;border:1px solid var(--line-2);background:var(--ground);color:var(--ink-2);font-family:var(--fu);font-size:12.5px;font-weight:500;padding:8px 13px;border-radius:999px;letter-spacing:-.01em;transition:all .16s}
+.cchip:hover{border-color:var(--gold);color:var(--gold)}
+.cchip[aria-pressed="true"]{border-color:var(--wine);background:var(--wine-soft);color:var(--wine);font-weight:700}
+.cf-agree{display:flex;gap:10px;align-items:flex-start;margin-top:12px;font-family:var(--fu);font-size:12.5px;line-height:1.65;color:var(--ink-2);cursor:pointer;word-break:keep-all}
+.cf-agree input{margin-top:2px;width:17px;height:17px;accent-color:var(--wine);flex:none;cursor:pointer}
+.cf-agree b{color:var(--ink);font-weight:700}
+.cf-fine{font-family:var(--fu);font-size:11.5px;line-height:1.7;color:var(--ink-3);margin:10px 2px 0;word-break:keep-all}
+.cf-submit{margin-top:14px;width:100%;appearance:none;border:none;cursor:pointer;background:linear-gradient(180deg,var(--wine-2),var(--wine));color:var(--on-wine);font-family:var(--fu);font-size:15.5px;font-weight:700;padding:15px;border-radius:12px;letter-spacing:.01em;transition:filter .15s,transform .12s}
+.cf-submit:hover{filter:brightness(1.06)}
+.cf-submit:active{transform:scale(.99)}
+.cf-submit:disabled{opacity:.55;cursor:default}
+.cf-msg{min-height:18px;margin:12px 2px 0;font-family:var(--fu);font-size:12.5px;font-weight:600;line-height:1.6;word-break:keep-all}
+.cf-msg.err{color:var(--wine-2)}
+.cf-msg.ok{color:var(--gold)}
+.hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:none}
+.contact-done{text-align:center;padding:14px 4px 6px}
+.contact-done .no{display:inline-block;font-family:var(--fu);font-size:12px;font-weight:700;letter-spacing:.14em;color:var(--gold);border:1px solid var(--line-2);border-radius:999px;padding:6px 14px;margin-bottom:14px}
+.contact-done h3{font-family:var(--fs);font-weight:600;font-size:19px;color:var(--ink);margin:0 0 9px;letter-spacing:-.015em}
+.contact-done p{font-family:var(--fu);font-size:13.5px;line-height:1.75;color:var(--ink-2);margin:0;word-break:keep-all}
+
+/* ============ 상담 챗봇 — 성경책 레퍼런스 ============ */
+.chat-fab{position:fixed;right:20px;bottom:calc(20px + env(safe-area-inset-bottom));z-index:140;display:flex;align-items:center;gap:9px;appearance:none;border:1px solid rgba(194,163,101,.42);cursor:pointer;background:linear-gradient(160deg,var(--hero-1),var(--hero-2));color:var(--on-wine);font-family:var(--fu);font-size:14px;font-weight:700;letter-spacing:-.01em;padding:13px 19px 13px 16px;border-radius:999px;box-shadow:0 6px 18px -6px rgba(58,20,30,.5),0 18px 40px -18px rgba(58,20,30,.6);transition:transform .18s cubic-bezier(.2,.8,.3,1),box-shadow .2s,opacity .2s}
+.chat-fab svg{width:17px;height:22px;flex:none}
+.chat-fab:hover{transform:translateY(-2px);box-shadow:0 10px 24px -8px rgba(58,20,30,.55),0 24px 50px -20px rgba(58,20,30,.65)}
+.chat-fab:active{transform:scale(.97)}
+.chat-fab.hide{opacity:0;visibility:hidden;transform:translateY(8px) scale(.94)}
+.chat-fab .fab-t{white-space:nowrap}
+@media (max-width:520px){.chat-fab{padding:14px;right:16px;bottom:calc(16px + env(safe-area-inset-bottom))}.chat-fab .fab-t{display:none}}
+
+.chat-scrim{position:fixed;inset:0;z-index:145;background:color-mix(in srgb,var(--hero-2) 52%,transparent);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);opacity:0;visibility:hidden;transition:opacity .3s,visibility .3s}
+.chat-scrim.open{opacity:1;visibility:visible}
+@media (min-width:721px){.chat-scrim{display:none}}
+
+.chat-panel{position:fixed;z-index:150;right:20px;bottom:calc(20px + env(safe-area-inset-bottom));width:392px;max-width:calc(100vw - 32px);height:min(660px,calc(100vh - 120px));display:flex;flex-direction:column;overflow:hidden;border:1px solid var(--line-2);border-radius:22px;background:var(--ground);box-shadow:var(--shadow-lg);opacity:0;visibility:hidden;transform:translateY(14px) scale(.985);transform-origin:100% 100%;transition:opacity .28s ease,transform .34s cubic-bezier(.2,.85,.3,1),visibility .28s}
+.chat-panel.open{opacity:1;visibility:visible;transform:none}
+.chat-panel[hidden]{display:none}
+@media (max-width:720px){
+  .chat-panel{right:0;left:0;bottom:0;width:100%;max-width:none;height:min(88vh,100dvh - 40px);border-radius:22px 22px 0 0;border-bottom:none;transform-origin:50% 100%}
+}
+
+/* 책등(spine) — 패널 왼쪽에 책의 안쪽 여백을 흉내낸 그라데이션 */
+.chat-panel::before{content:"";position:absolute;left:0;top:0;bottom:0;width:16px;pointer-events:none;z-index:3;background:linear-gradient(90deg,color-mix(in srgb,var(--ink) 9%,transparent),transparent 62%)}
+
+.chat-head{position:relative;flex:none;display:flex;align-items:center;gap:12px;padding:17px 16px 16px 20px;background:linear-gradient(150deg,var(--hero-1),var(--hero-2));color:var(--on-wine);border-bottom:1px solid rgba(194,163,101,.3)}
+.chat-head::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:.75}
+.chat-cross{flex:none;width:18px;height:24px}
+.chat-ttl{flex:1;min-width:0}
+.chat-ttl b{display:block;font-family:var(--fs);font-weight:600;font-size:16.5px;letter-spacing:-.01em}
+.chat-ttl span{display:block;margin-top:3px;font-family:var(--fu);font-size:11px;font-weight:500;letter-spacing:.16em;color:var(--on-wine-2);text-transform:uppercase}
+.chat-x{flex:none;appearance:none;border:1px solid var(--on-wine-line);background:transparent;color:var(--on-wine-2);width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:14px;line-height:1;transition:all .16s}
+.chat-x:hover{background:rgba(243,233,221,.12);color:var(--on-wine)}
+
+/* 책갈피 리본 */
+.chat-ribbon{position:absolute;top:0;right:56px;width:15px;height:44px;background:linear-gradient(180deg,var(--gold-2),var(--gold));clip-path:polygon(0 0,100% 0,100% 100%,50% 78%,0 100%);opacity:.92;pointer-events:none}
+
+.chat-body{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:20px 18px 8px 22px;background-color:var(--ground);background-image:var(--grain);scrollbar-width:thin}
+.chat-body::-webkit-scrollbar{width:7px}
+.chat-body::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:4px}
+
+.cmsg{display:flex;gap:10px;margin-bottom:14px;animation:cmIn .42s cubic-bezier(.2,.8,.3,1) both}
+@keyframes cmIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.cmsg{animation:none}.chat-panel{transition:opacity .01s}}
+.cav{flex:none;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(160deg,var(--hero-1),var(--hero-2));border:1px solid rgba(194,163,101,.35);margin-top:2px}
+.cav svg{width:10px;height:14px}
+.cbub{max-width:calc(100% - 40px);border-radius:4px 14px 14px 14px;background:var(--surface);border:1px solid var(--line);border-left:2px solid var(--gold);padding:13px 15px;box-shadow:0 1px 2px rgba(42,33,30,.04);font-family:var(--fu);font-size:14px;line-height:1.78;color:var(--ink);letter-spacing:-.01em;word-break:keep-all;white-space:pre-wrap}
+.cbub b{font-weight:700;color:var(--ink)}
+.cbub .verse{display:block;font-family:var(--fs);font-size:14.5px;line-height:1.85;color:var(--wine);margin:8px 0 2px;padding-left:11px;border-left:2px solid var(--line-2)}
+.cbub .src{display:block;font-size:11.5px;color:var(--ink-3);margin-top:5px;letter-spacing:.02em}
+.cmsg.me{justify-content:flex-end}
+.cmsg.me .cbub{background:var(--wine-soft);border:1px solid color-mix(in srgb,var(--wine) 34%,transparent);border-left:1px solid color-mix(in srgb,var(--wine) 34%,transparent);border-radius:14px 4px 14px 14px;color:var(--ink);box-shadow:0 1px 2px rgba(42,33,30,.05)}
+
+.ctyping{display:inline-flex;gap:5px;padding:4px 2px}
+.ctyping i{width:6px;height:6px;border-radius:50%;background:var(--ink-3);animation:ctd 1.25s ease-in-out infinite}
+.ctyping i:nth-child(2){animation-delay:.18s}
+.ctyping i:nth-child(3){animation-delay:.36s}
+@keyframes ctd{0%,60%,100%{opacity:.25;transform:translateY(0)}30%{opacity:.85;transform:translateY(-3px)}}
+
+.copts{display:flex;flex-wrap:wrap;gap:7px;margin:0 0 16px 38px;animation:cmIn .42s cubic-bezier(.2,.8,.3,1) both}
+.copt{appearance:none;cursor:pointer;border:1px solid var(--line-2);background:var(--surface);color:var(--ink-2);font-family:var(--fu);font-size:12.5px;font-weight:600;padding:9px 14px;border-radius:999px;letter-spacing:-.01em;transition:all .16s}
+.copt:hover{border-color:var(--gold);color:var(--gold);transform:translateY(-1px)}
+.copt[aria-pressed="true"]{border-color:var(--wine);background:var(--wine-soft);color:var(--wine)}
+.copt.go{border-color:var(--gold);background:linear-gradient(180deg,var(--gold-2),var(--gold));color:#3A141E;font-weight:700}
+.copt.ghost{border-style:dashed;color:var(--ink-3)}
+
+/* 위기 안내 (service-policy.md §14.2) */
+.crisis{margin:2px 0 16px 38px;border-radius:14px;overflow:hidden;border:1px solid color-mix(in srgb,var(--wine) 45%,transparent);background:var(--surface);box-shadow:var(--shadow);animation:cmIn .42s cubic-bezier(.2,.8,.3,1) both}
+.crisis-h{padding:14px 16px;background:linear-gradient(150deg,var(--hero-1),var(--hero-2));color:var(--on-wine)}
+.crisis-h b{display:block;font-family:var(--fs);font-size:15px;font-weight:600;letter-spacing:-.01em}
+.crisis-h span{display:block;margin-top:6px;font-family:var(--fu);font-size:12.5px;line-height:1.7;color:var(--on-wine-2);word-break:keep-all}
+.crisis-l{display:block;display:flex;align-items:center;gap:10px;padding:12px 16px;border-top:1px solid var(--line);text-decoration:none;transition:background .15s}
+.crisis-l:hover{background:var(--surface-2)}
+.crisis-l .nm{flex:1;min-width:0;font-family:var(--fu);font-size:13.5px;font-weight:600;color:var(--ink)}
+.crisis-l .nt{display:block;font-size:11px;font-weight:500;color:var(--ink-3);margin-top:2px}
+.crisis-l .tl{flex:none;font-family:var(--fu);font-size:14.5px;font-weight:700;color:var(--wine);letter-spacing:.01em}
+.crisis-f{padding:12px 16px;border-top:1px solid var(--line);font-family:var(--fu);font-size:11.5px;line-height:1.7;color:var(--ink-3);word-break:keep-all;background:var(--ground)}
+
+.cform{margin:0 0 16px 38px;display:grid;gap:8px;animation:cmIn .42s cubic-bezier(.2,.8,.3,1) both}
+.cform .cf-in{padding:12px 13px;font-size:14px;background:var(--surface)}
+.cform .cf-agree{margin-top:4px;font-size:12px}
+
+.chat-foot{flex:none;border-top:1px solid var(--line);background:var(--surface);padding:12px 14px calc(12px + env(safe-area-inset-bottom))}
+.chat-inrow{display:flex;gap:9px;align-items:flex-end}
+.chat-ta{flex:1;min-width:0;max-height:112px;border:1px solid var(--line-2);background:var(--ground);color:var(--ink);border-radius:14px;padding:12px 14px;font-family:var(--fu);font-size:14.5px;line-height:1.65;letter-spacing:-.01em;resize:none;transition:border-color .15s}
+.chat-ta::placeholder{color:var(--ink-3)}
+.chat-ta:focus{outline:none;border-color:var(--gold)}
+.chat-ta:disabled{opacity:.5;cursor:not-allowed}
+.chat-send{flex:none;width:44px;height:44px;border-radius:14px;appearance:none;border:none;cursor:pointer;background:linear-gradient(180deg,var(--wine-2),var(--wine));color:var(--on-wine);display:grid;place-items:center;transition:filter .15s,transform .12s,opacity .15s}
+.chat-send svg{width:17px;height:17px}
+.chat-send:hover{filter:brightness(1.07)}
+.chat-send:active{transform:scale(.94)}
+.chat-send:disabled{opacity:.4;cursor:default}
+.chat-note{margin:9px 3px 0;font-family:var(--fu);font-size:10.5px;line-height:1.65;color:var(--ink-3);letter-spacing:-.01em;word-break:keep-all}
+
+/* ============ 섹션 네비게이션 ============ */
+.navwrap{border-top:1px solid var(--line);background:color-mix(in srgb,var(--ground) 88%,transparent)}
+.nav{max-width:var(--appw);margin:0 auto;padding:0 12px;display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.nav::-webkit-scrollbar{display:none}
+.nav a{position:relative;flex:none;display:block;padding:11px 13px 10px;font-family:var(--fu);font-size:13px;font-weight:600;letter-spacing:-.01em;color:var(--ink-3);text-decoration:none;white-space:nowrap;transition:color .18s}
+.nav a::after{content:"";position:absolute;left:13px;right:13px;bottom:0;height:2px;border-radius:2px;background:var(--gold);transform:scaleX(0);transform-origin:50%;transition:transform .24s cubic-bezier(.2,.8,.3,1)}
+.nav a:hover{color:var(--wine)}
+.nav a[aria-current="true"]{color:var(--wine)}
+.nav a[aria-current="true"]::after{transform:scaleX(1)}
+@media (min-width:900px){.nav{max-width:1180px;padding:0 22px}}
+
+/* ============ 나의 성소 ============ */
+.snc{background:var(--surface);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);overflow:hidden}
+
+/* 연속 묵상 띠 */
+.snc-streak{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:18px 20px;background:linear-gradient(150deg,var(--hero-1),var(--hero-2));color:var(--on-wine);border-bottom:1px solid rgba(194,163,101,.3)}
+.snc-flame{flex:none;display:flex;align-items:center;gap:11px}
+.snc-flame svg{width:22px;height:30px}
+.snc-flame .n{font-family:var(--fs);font-size:25px;font-weight:600;line-height:1;color:var(--gold-2)}
+.snc-flame .n small{font-family:var(--fu);font-size:12px;font-weight:600;margin-left:3px;color:var(--on-wine-2)}
+.snc-flame .lb{display:block;font-family:var(--fu);font-size:10.5px;font-weight:600;letter-spacing:.16em;color:var(--on-wine-2);margin-top:5px;text-transform:uppercase}
+.snc-week{display:flex;gap:6px;flex:1;min-width:186px}
+.snc-day{flex:1;min-width:0;text-align:center}
+.snc-day .dot{height:30px;border-radius:8px;border:1px solid var(--on-wine-line);display:grid;place-items:center;font-size:12px;color:var(--on-wine-2);transition:all .2s}
+.snc-day.on .dot{background:linear-gradient(180deg,var(--gold-2),var(--gold));border-color:transparent;color:#3A141E;font-weight:700}
+.snc-day.today .dot{box-shadow:0 0 0 2px color-mix(in srgb,var(--gold-2) 55%,transparent)}
+.snc-day .wd{display:block;font-family:var(--fu);font-size:10px;font-weight:600;color:var(--on-wine-2);margin-top:5px;opacity:.8}
+.snc-mark{flex:none;appearance:none;cursor:pointer;border:1px solid rgba(194,163,101,.5);background:transparent;color:var(--gold-2);font-family:var(--fu);font-size:12.5px;font-weight:700;padding:10px 15px;border-radius:999px;letter-spacing:-.01em;transition:all .16s}
+.snc-mark:hover{background:rgba(194,163,101,.14)}
+.snc-mark.done{background:linear-gradient(180deg,var(--gold-2),var(--gold));border-color:transparent;color:#3A141E;cursor:default}
+
+/* 탭 */
+.snc-tabs{display:flex;gap:0;border-bottom:1px solid var(--line);background:var(--surface-2);overflow-x:auto;scrollbar-width:none}
+.snc-tabs::-webkit-scrollbar{display:none}
+.snc-tab{position:relative;flex:1;min-width:92px;appearance:none;border:none;cursor:pointer;background:transparent;color:var(--ink-3);font-family:var(--fu);font-size:13px;font-weight:600;padding:14px 10px 13px;letter-spacing:-.01em;white-space:nowrap;transition:color .18s}
+.snc-tab::after{content:"";position:absolute;left:16%;right:16%;bottom:-1px;height:2px;background:var(--gold);border-radius:2px;transform:scaleX(0);transition:transform .24s cubic-bezier(.2,.8,.3,1)}
+.snc-tab:hover{color:var(--wine)}
+.snc-tab[aria-selected="true"]{color:var(--wine);background:var(--surface)}
+.snc-tab[aria-selected="true"]::after{transform:scaleX(1)}
+.snc-tab .cnt{display:inline-block;margin-left:5px;font-size:10.5px;font-weight:700;color:var(--gold);vertical-align:1px}
+
+.snc-pane{padding:20px;animation:sncIn .34s cubic-bezier(.2,.8,.3,1) both}
+.snc-pane[hidden]{display:none}
+@keyframes sncIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.snc-pane{animation:none}}
+.snc-hint{font-family:var(--fu);font-size:12.5px;line-height:1.72;color:var(--ink-3);margin:0 0 14px;word-break:keep-all}
+.snc-empty{text-align:center;color:var(--ink-3);font-size:13px;font-weight:500;line-height:1.75;padding:28px 16px;border:1px dashed var(--line-2);border-radius:14px;word-break:keep-all}
+.snc-in,.snc-ta,.snc-sel{width:100%;border:1px solid var(--line-2);background:var(--ground);color:var(--ink);border-radius:11px;padding:11px 13px;font-family:var(--fu);font-size:14px;letter-spacing:-.01em;transition:border-color .15s,box-shadow .15s}
+.snc-ta{min-height:64px;resize:vertical;line-height:1.72}
+.snc-sel{appearance:none;cursor:pointer;background-image:linear-gradient(45deg,transparent 50%,var(--ink-3) 50%),linear-gradient(135deg,var(--ink-3) 50%,transparent 50%);background-position:calc(100% - 17px) calc(50% + 1px),calc(100% - 12px) calc(50% + 1px);background-size:5px 5px,5px 5px;background-repeat:no-repeat;padding-right:36px}
+.snc-in::placeholder,.snc-ta::placeholder{color:var(--ink-3)}
+.snc-in:focus,.snc-ta:focus,.snc-sel:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px color-mix(in srgb,var(--gold) 15%,transparent)}
+.snc-lab{display:block;font-family:var(--fu);font-size:11px;font-weight:700;letter-spacing:.13em;color:var(--ink-3);text-transform:uppercase;margin:0 2px 6px}
+.snc-go{appearance:none;border:none;cursor:pointer;background:linear-gradient(180deg,var(--wine-2),var(--wine));color:var(--on-wine);font-family:var(--fu);font-size:14px;font-weight:700;padding:12px 18px;border-radius:11px;letter-spacing:-.01em;transition:filter .15s,transform .12s}
+.snc-go:hover{filter:brightness(1.06)}
+.snc-go:active{transform:scale(.98)}
+.snc-go:disabled{opacity:.5;cursor:default}
+.snc-ghost{appearance:none;cursor:pointer;border:1px solid var(--line-2);background:var(--surface);color:var(--ink-2);font-family:var(--fu);font-size:12.5px;font-weight:600;padding:9px 14px;border-radius:999px;transition:all .16s}
+.snc-ghost:hover{border-color:var(--gold);color:var(--gold)}
+.snc-row{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+.snc-msg{font-family:var(--fu);font-size:12px;font-weight:600;color:var(--gold);min-height:16px;margin:10px 2px 0}
+.snc-msg.err{color:var(--wine-2)}
+
+/* 묵상 노트 */
+.qt-grid{display:grid;gap:11px}
+.qt-q{display:flex;gap:9px;align-items:flex-start;margin:0 2px 6px}
+.qt-q i{flex:none;width:19px;height:19px;border-radius:50%;display:grid;place-items:center;background:var(--wine-soft);color:var(--wine);font-style:normal;font-size:11px;font-weight:800;font-family:var(--fu);margin-top:1px}
+.qt-q b{font-family:var(--fu);font-size:13px;font-weight:700;color:var(--ink);letter-spacing:-.01em}
+.qt-q span{display:block;font-size:11.5px;font-weight:500;color:var(--ink-3);margin-top:2px;word-break:keep-all}
+.qt-verse{background:var(--ground);border:1px solid var(--line);border-left:2px solid var(--gold);border-radius:4px 12px 12px 4px;padding:13px 15px;margin-bottom:4px}
+.qt-verse p{margin:0;font-family:var(--fs);font-size:14.5px;line-height:1.85;color:var(--wine)}
+.qt-verse cite{display:block;font-style:normal;font-family:var(--fu);font-size:11.5px;color:var(--ink-3);margin-top:7px;letter-spacing:.02em}
+.qt-list{display:grid;gap:10px;margin-top:18px}
+.qt-item{position:relative;background:var(--ground);border:1px solid var(--line);border-radius:14px;padding:14px 42px 14px 16px}
+.qt-item .dt{font-family:var(--fu);font-size:11px;font-weight:700;letter-spacing:.1em;color:var(--gold)}
+.qt-item .rf{font-family:var(--fs);font-size:13.5px;color:var(--wine);margin:6px 0 0}
+.qt-item .bd{font-family:var(--fu);font-size:13px;line-height:1.75;color:var(--ink-2);margin:8px 0 0;white-space:pre-wrap;word-break:keep-all}
+.qt-x{position:absolute;top:11px;right:11px;appearance:none;border:none;background:transparent;color:var(--ink-3);cursor:pointer;font-size:12px;padding:4px 6px;border-radius:6px;transition:all .15s}
+.qt-x:hover{color:var(--wine-2);background:var(--wine-soft)}
+
+/* 기도 제목 */
+.pr-add{display:grid;gap:9px;margin-bottom:16px}
+.pr-catrow{display:flex;gap:6px;flex-wrap:wrap}
+.pr-cat{appearance:none;cursor:pointer;border:1px solid var(--line-2);background:var(--ground);color:var(--ink-2);font-family:var(--fu);font-size:12px;font-weight:600;padding:7px 13px;border-radius:999px;transition:all .16s}
+.pr-cat[aria-pressed="true"]{border-color:var(--wine);background:var(--wine-soft);color:var(--wine);font-weight:700}
+.pr-list{display:grid;gap:9px}
+.pr-item{display:flex;gap:12px;align-items:flex-start;background:var(--ground);border:1px solid var(--line);border-radius:14px;padding:14px 15px;transition:border-color .2s,opacity .3s}
+.pr-item .tag{flex:none;font-family:var(--fu);font-size:10px;font-weight:800;letter-spacing:.08em;padding:4px 8px;border-radius:6px;background:var(--wine-soft);color:var(--wine);margin-top:2px}
+.pr-item .bd{flex:1;min-width:0}
+.pr-item .ti{font-family:var(--fu);font-size:14px;font-weight:600;color:var(--ink);line-height:1.6;word-break:keep-all}
+.pr-item .mt{display:block;font-family:var(--fu);font-size:11px;color:var(--ink-3);margin-top:5px;letter-spacing:.01em}
+.pr-acts{flex:none;display:flex;gap:5px;align-items:center}
+.pr-b{appearance:none;cursor:pointer;border:1px solid var(--line-2);background:var(--surface);color:var(--ink-3);font-family:var(--fu);font-size:11.5px;font-weight:700;padding:7px 11px;border-radius:999px;white-space:nowrap;transition:all .16s}
+.pr-b.amen:hover{border-color:var(--gold);color:var(--gold);background:color-mix(in srgb,var(--gold) 10%,transparent)}
+.pr-b.del:hover{border-color:var(--wine-2);color:var(--wine-2)}
+.pr-item.answered{border-color:color-mix(in srgb,var(--gold) 45%,transparent);background:color-mix(in srgb,var(--gold) 7%,var(--ground))}
+.pr-item.answered .tag{background:color-mix(in srgb,var(--gold) 20%,transparent);color:var(--gold)}
+.pr-item.answered .ti{color:var(--ink-2)}
+.pr-sep{display:flex;align-items:center;gap:11px;margin:20px 0 12px}
+.pr-sep span{flex:none;font-family:var(--fu);font-size:11px;font-weight:700;letter-spacing:.14em;color:var(--gold);text-transform:uppercase}
+.pr-sep::after{content:"";flex:1;height:1px;background:var(--line)}
+
+/* 말씀 암송 */
+.mem-card{background:var(--ground);border:1px solid var(--line);border-radius:16px;padding:20px 18px;text-align:center}
+.mem-text{font-family:var(--fs);font-size:16px;line-height:2.05;color:var(--ink);margin:0 0 4px;word-break:keep-all}
+.mem-w{display:inline-block;margin:0 2px}
+.mem-blank{display:inline-block;min-width:44px;border-bottom:2px solid var(--gold);color:transparent;margin:0 2px;transition:all .2s}
+.mem-blank.now{background:color-mix(in srgb,var(--gold) 16%,transparent);border-radius:4px 4px 0 0}
+.mem-blank.ok{color:var(--wine);border-bottom-color:color-mix(in srgb,var(--wine) 40%,transparent)}
+.mem-ref{font-family:var(--fu);font-size:12px;color:var(--ink-3);letter-spacing:.03em;margin:12px 0 0}
+.mem-bar{display:flex;gap:7px;justify-content:center;flex-wrap:wrap;margin-top:16px}
+.mem-opt{appearance:none;cursor:pointer;border:1px solid var(--line-2);background:var(--surface);color:var(--ink-2);font-family:var(--fu);font-size:13px;font-weight:600;padding:10px 15px;border-radius:11px;transition:all .16s}
+.mem-opt:hover{border-color:var(--gold);color:var(--gold);transform:translateY(-1px)}
+.mem-opt:disabled{opacity:.35;cursor:default;transform:none}
+.mem-done{font-family:var(--fs);font-size:15px;color:var(--wine);margin:14px 0 0}
+.mem-meta{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:14px;font-family:var(--fu);font-size:11.5px;color:var(--ink-3)}
+.mem-meta b{color:var(--gold);font-weight:700}
+
+/* 통독 진도 */
+.rd-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.rd-pct{font-family:var(--fs);font-size:23px;font-weight:600;color:var(--wine)}
+.rd-pct small{font-family:var(--fu);font-size:12px;font-weight:600;color:var(--ink-3);margin-left:6px}
+.rd-track{height:7px;border-radius:999px;background:var(--surface-2);overflow:hidden;margin-bottom:18px}
+.rd-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--gold),var(--wine));transition:width .5s cubic-bezier(.2,.8,.3,1)}
+.rd-grp{font-family:var(--fu);font-size:11px;font-weight:700;letter-spacing:.14em;color:var(--gold);text-transform:uppercase;margin:0 0 9px}
+.rd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(62px,1fr));gap:5px;margin-bottom:18px}
+.rd-b{appearance:none;cursor:pointer;border:1px solid var(--line-2);background:var(--ground);color:var(--ink-3);font-family:var(--fu);font-size:11.5px;font-weight:600;padding:9px 3px;border-radius:9px;letter-spacing:-.02em;transition:all .15s}
+.rd-b:hover{border-color:var(--gold);color:var(--gold)}
+.rd-b[aria-pressed="true"]{background:var(--wine);border-color:var(--wine);color:var(--on-wine);font-weight:700}
+
+/* ============ 계정 모달 추가 ============ */
+.auth-alt{display:flex;align-items:center;gap:10px;margin:14px 0 12px}
+.auth-alt::before,.auth-alt::after{content:"";flex:1;height:1px;background:var(--line)}
+.auth-alt span{font-family:var(--fu);font-size:10.5px;font-weight:700;letter-spacing:.14em;color:var(--ink-3);text-transform:uppercase}
+.auth-2nd{width:100%;appearance:none;cursor:pointer;border:1px solid var(--line-2);background:var(--surface);color:var(--ink-2);font-family:var(--fu);font-size:13.5px;font-weight:600;padding:13px;border-radius:12px;transition:all .16s}
+.auth-2nd:hover{border-color:var(--gold);color:var(--wine)}
+.auth-2nd:disabled{opacity:.5;cursor:default}
+.auth-mini{display:block;width:100%;text-align:center;appearance:none;border:none;background:transparent;color:var(--ink-3);font-family:var(--fu);font-size:12px;font-weight:600;cursor:pointer;padding:9px 4px 0;text-decoration:underline;text-underline-offset:3px;transition:color .15s}
+.auth-mini:hover{color:var(--wine)}
+.acct-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0 18px}
+.acct-st{background:var(--ground);border:1px solid var(--line);border-radius:13px;padding:13px 8px;text-align:center}
+.acct-st b{display:block;font-family:var(--fs);font-size:20px;font-weight:600;color:var(--wine);line-height:1.2}
+.acct-st span{display:block;font-family:var(--fu);font-size:10.5px;font-weight:600;letter-spacing:.06em;color:var(--ink-3);margin-top:5px}
+.acct-name{display:flex;gap:8px;margin-bottom:14px}
+.acct-name .auth-in{flex:1;min-width:0}
+.acct-name button{flex:none;appearance:none;cursor:pointer;border:1px solid var(--line-2);background:var(--surface);color:var(--ink-2);font-family:var(--fu);font-size:12.5px;font-weight:700;padding:0 14px;border-radius:12px;transition:all .16s}
+.acct-name button:hover{border-color:var(--gold);color:var(--gold)}
+.acct-tools{display:flex;gap:8px;margin-bottom:12px}
+.acct-tools button{flex:1;appearance:none;cursor:pointer;border:1px solid var(--line-2);background:var(--surface);color:var(--ink-2);font-family:var(--fu);font-size:12.5px;font-weight:600;padding:11px 8px;border-radius:12px;transition:all .16s}
+.acct-tools button:hover{border-color:var(--gold);color:var(--wine)}
+.acct-sync{font-family:var(--fu);font-size:11px;line-height:1.65;color:var(--ink-3);text-align:center;margin:12px 2px 0;word-break:keep-all}
+.acct-sync b{color:var(--gold);font-weight:700}
+
+/* 토스트 */
+.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translate(-50%,10px);z-index:200;max-width:min(92vw,420px);background:linear-gradient(150deg,var(--hero-1),var(--hero-2));color:var(--on-wine);border:1px solid rgba(194,163,101,.4);border-radius:14px;padding:13px 18px;font-family:var(--fu);font-size:13px;font-weight:600;letter-spacing:-.01em;box-shadow:var(--shadow-lg);opacity:0;visibility:hidden;transition:opacity .28s,transform .32s cubic-bezier(.2,.85,.3,1),visibility .28s;word-break:keep-all;text-align:center}
+.toast.on{opacity:1;visibility:visible;transform:translate(-50%,0)}
+
+/* 스티키 헤더 높이만큼 앵커 여유 */
+#today,#mylib,#sanctum,#topics,#lib,#phil,#contact{scroll-margin-top:112px}
+@media (max-width:600px){#today,#mylib,#sanctum,#topics,#lib,#phil,#contact{scroll-margin-top:104px}}
+
+</style>
+</head>
+<body>
 <header class="top">
   <div class="row">
     <div class="brand">
       <svg viewBox="0 0 16 22" fill="none" aria-hidden="true"><path d="M8 1v20M2 7h12" stroke="var(--gold)" stroke-width="1.7" stroke-linecap="round"/></svg>
       <span class="nm">Salvation</span>
     </div>
-    <button class="tbtn" id="themeBtn" type="button" aria-label="밝기 전환">◐</button>
+    <div class="top-actions">
+      <button class="acct-btn" id="acctBtn" type="button">로그인</button>
+      <button class="tbtn" id="themeBtn" type="button" aria-label="밝기 전환">◐</button>
+    </div>
+  </div>
+  <div class="navwrap">
+    <nav class="nav" id="siteNav" aria-label="섹션 이동">
+      <a href="#today" data-sec="today">오늘의 말씀</a>
+      <a href="#mylib" data-sec="mylib">내 서재</a>
+      <a href="#sanctum" data-sec="sanctum">나의 성소</a>
+      <a href="#topics" data-sec="topics">주제</a>
+      <a href="#lib" data-sec="lib">말씀 서재</a>
+      <a href="#phil" data-sec="phil">인문학</a>
+      <a href="#contact" data-sec="contact">상담 · 문의</a>
+    </nav>
   </div>
 </header>
 
 <!-- HERO -->
 <section class="hero">
   <div class="hero-in">
-    <span class="eyebrow">말씀 · 인문 · 삶</span>
-    <h1 id="greet">지금, 어떤 마음이신가요?</h1>
-    <p class="lead">겪고 계신 상황을 조용히 적어주세요. 성경의 말씀과 인류가 쌓아온 인문학의 지혜로, 그 마음의 뿌리를 함께 비춰 드리겠습니다.</p>
-    <div class="ask">
-      <textarea id="askInput" placeholder="예) 투자에서 손실을 봐 마음이 무겁고 조급합니다&#10;예) 시험이 다가오는데 불안하고 집중이 되지 않습니다" aria-label="상황 입력"></textarea>
-      <button class="btn-primary" id="askBtn" type="button">말씀 받기</button>
+    <div class="hero-a">
+      <span class="eyebrow">말씀 · 인문 · 삶</span>
+      <h1 id="greet">지금, 어떤 마음이신가요?</h1>
+      <p class="lead">겪고 계신 상황을 조용히 적어주세요. 성경의 말씀과 인류가 쌓아온 인문학의 지혜로, 그 마음의 뿌리를 함께 비춰 드리겠습니다.</p>
+      <div class="ask">
+        <textarea id="askInput" placeholder="예) 투자에서 손실을 봐 마음이 무겁고 조급합니다&#10;예) 시험이 다가오는데 불안하고 집중이 되지 않습니다" aria-label="상황 입력"></textarea>
+        <button class="btn-primary" id="askBtn" type="button">말씀 받기</button>
+      </div>
     </div>
-    <p class="hint">이런 마음일 때, 눌러서 바로 받아보세요</p>
-    <div class="mind-chips" id="mindChips"></div>
+    <div class="hero-b">
+      <p class="hint">이런 마음일 때, 눌러서 바로 받아보세요</p>
+      <div class="mind-chips" id="mindChips"></div>
+    </div>
   </div>
 </section>
 
@@ -336,14 +705,132 @@ footer .fnote{font-size:11.5px;line-height:1.66;color:var(--ink-3);font-weight:5
   <!-- result -->
   <section class="result" id="result" hidden></section>
 
-  <!-- today -->
-  <section class="sec">
-    <div class="sec-head"><span class="eyebrow">Verse of the day</span><h2>오늘의 말씀</h2></div>
-    <div class="card today" id="today"></div>
+  <!-- today + 내 서재 (desktop 2-col) -->
+  <div class="pair-grid">
+    <section class="sec">
+      <div class="sec-head"><span class="eyebrow">Verse of the day</span><h2>오늘의 말씀</h2></div>
+      <div class="card today" id="today"></div>
+    </section>
+    <section class="sec" id="mylib">
+      <div class="sec-head"><span class="eyebrow">My library</span><h2>내 말씀 서재</h2><p class="sec-sub" id="mylibSub">간직한 말씀이 여기에 모입니다</p></div>
+      <div class="saved-list" id="savedList"></div>
+    </section>
+  </div>
+
+
+  <!-- 나의 성소 -->
+  <section class="sec" id="sanctum">
+    <div class="sec-head"><span class="eyebrow">Daily practice</span><h2>나의 성소</h2><p class="sec-sub" id="sncSub">매일의 묵상과 기도가 이곳에 쌓입니다</p></div>
+
+    <div class="snc">
+      <div class="snc-streak">
+        <div class="snc-flame">
+          <svg viewBox="0 0 22 30" fill="none" aria-hidden="true">
+            <path d="M11 3c2.6 3.3 4.6 5.8 4.6 8.6 0 2.7-2 4.6-4.6 4.6s-4.6-1.9-4.6-4.6C6.4 8.8 8.4 6.3 11 3Z" fill="var(--gold-2)" opacity=".92"/>
+            <path d="M11 7.6c1.3 1.8 2.3 3.1 2.3 4.6 0 1.4-1 2.4-2.3 2.4s-2.3-1-2.3-2.4c0-1.5 1-2.8 2.3-4.6Z" fill="var(--hero-2)" opacity=".55"/>
+            <rect x="7.6" y="17.4" width="6.8" height="10.4" rx="1.7" stroke="var(--gold)" stroke-width="1.4"/>
+          </svg>
+          <div>
+            <div class="n" id="sncStreak">0<small>일</small></div>
+            <span class="lb">연속 묵상</span>
+          </div>
+        </div>
+        <div class="snc-week" id="sncWeek"></div>
+        <button class="snc-mark" id="sncMark" type="button">오늘 묵상 표시</button>
+      </div>
+
+      <div class="snc-tabs" role="tablist" aria-label="성소 메뉴">
+        <button class="snc-tab" type="button" role="tab" data-pane="qt" aria-selected="true">묵상 노트</button>
+        <button class="snc-tab" type="button" role="tab" data-pane="pr" aria-selected="false">기도 제목<span class="cnt" id="sncPrCnt"></span></button>
+        <button class="snc-tab" type="button" role="tab" data-pane="mem" aria-selected="false">말씀 암송</button>
+        <button class="snc-tab" type="button" role="tab" data-pane="rd" aria-selected="false">통독 진도<span class="cnt" id="sncRdCnt"></span></button>
+      </div>
+
+      <!-- 묵상 노트 -->
+      <div class="snc-pane" id="pane-qt" role="tabpanel">
+        <p class="snc-hint">보고 · 느끼고 · 행하는 세 걸음으로 오늘의 말씀을 남겨 보세요. 길게 쓰지 않아도 좋습니다. 한 줄이면 충분합니다.</p>
+
+        <div class="qt-verse" id="qtVerse"><p id="qtVerseText"></p><cite id="qtVerseRef"></cite></div>
+        <div class="snc-row" style="margin:10px 0 16px">
+          <select class="snc-sel" id="qtPick" aria-label="묵상할 말씀 선택" style="flex:1;min-width:180px"></select>
+        </div>
+
+        <div class="qt-grid">
+          <div>
+            <div class="qt-q"><i>1</i><div><b>무엇을 보았습니까</b><span>말씀 안에서 눈에 들어온 한 문장, 한 단어</span></div></div>
+            <textarea class="snc-ta" id="qtSaw" placeholder="예) ‘내가 너와 함께하리라’는 약속이 반복됩니다."></textarea>
+          </div>
+          <div>
+            <div class="qt-q"><i>2</i><div><b>무엇을 느꼈습니까</b><span>지금 내 상황과 어디서 만나는지</span></div></div>
+            <textarea class="snc-ta" id="qtFelt" placeholder="예) 혼자 감당한다고 여겼던 것이 부끄럽게 느껴집니다."></textarea>
+          </div>
+          <div>
+            <div class="qt-q"><i>3</i><div><b>무엇을 하겠습니까</b><span>오늘 하루 안에서 지킬 수 있는 아주 작은 한 가지</span></div></div>
+            <textarea class="snc-ta" id="qtDo" placeholder="예) 오늘 저녁, 미뤄 둔 연락 한 통을 먼저 하겠습니다."></textarea>
+          </div>
+          <div class="snc-row">
+            <button class="snc-go" id="qtSave" type="button">묵상 남기기</button>
+            <button class="snc-ghost" id="qtClear" type="button">지우기</button>
+          </div>
+          <p class="snc-msg" id="qtMsg" role="status" aria-live="polite"></p>
+        </div>
+
+        <div class="qt-list" id="qtList"></div>
+      </div>
+
+      <!-- 기도 제목 -->
+      <div class="snc-pane" id="pane-pr" role="tabpanel" hidden>
+        <p class="snc-hint">기도는 잊지 않는 일에서 시작됩니다. 제목을 적어 두고, 응답을 받은 날 표시해 두세요. 응답의 기록이 다음 기도의 근거가 됩니다.</p>
+
+        <div class="pr-add">
+          <div class="pr-catrow" id="prCats"></div>
+          <input class="snc-in" id="prTitle" type="text" maxlength="120" placeholder="무엇을 위해 기도하시겠습니까">
+          <div class="snc-row"><button class="snc-go" id="prAdd" type="button">기도 제목 더하기</button></div>
+          <p class="snc-msg" id="prMsg" role="status" aria-live="polite"></p>
+        </div>
+
+        <div class="pr-list" id="prList"></div>
+        <div id="prAnsWrap" hidden>
+          <div class="pr-sep"><span>응답된 기도</span></div>
+          <div class="pr-list" id="prAns"></div>
+        </div>
+      </div>
+
+      <!-- 말씀 암송 -->
+      <div class="snc-pane" id="pane-mem" role="tabpanel" hidden>
+        <p class="snc-hint">서재에 간직한 말씀으로 암송을 연습합니다. 가려진 자리에 들어갈 낱말을 순서대로 고르세요.</p>
+
+        <div class="snc-row" style="margin-bottom:14px">
+          <select class="snc-sel" id="memPick" aria-label="암송할 말씀" style="flex:1;min-width:170px"></select>
+          <select class="snc-sel" id="memLevel" aria-label="난이도" style="width:104px;flex:none">
+            <option value="0.25">쉬움</option>
+            <option value="0.45" selected>보통</option>
+            <option value="0.7">어려움</option>
+          </select>
+        </div>
+
+        <div class="mem-card" id="memCard"></div>
+        <p class="snc-msg" id="memMsg" role="status" aria-live="polite"></p>
+      </div>
+
+      <!-- 통독 진도 -->
+      <div class="snc-pane" id="pane-rd" role="tabpanel" hidden>
+        <p class="snc-hint">읽은 책을 눌러 두세요. 어디까지 걸어왔는지 보이면 다음 한 권이 가벼워집니다.</p>
+        <div class="rd-head">
+          <div class="rd-pct" id="rdPct">0%<small id="rdCount">0 / 66권</small></div>
+          <button class="snc-ghost" id="rdReset" type="button">진도 초기화</button>
+        </div>
+        <div class="rd-track"><div class="rd-fill" id="rdFill" style="width:0%"></div></div>
+        <p class="rd-grp">구약 39권</p>
+        <div class="rd-grid" id="rdOld"></div>
+        <p class="rd-grp">신약 27권</p>
+        <div class="rd-grid" id="rdNew"></div>
+      </div>
+    </div>
   </section>
 
   <!-- domains -->
-  <section class="sec">
+  <section class="sec" id="topics">
     <div class="sec-head"><span class="eyebrow">Eight paths</span><h2>주제로 살펴보기</h2></div>
     <div class="dom-grid" id="domGrid"></div>
   </section>
@@ -366,6 +853,73 @@ footer .fnote{font-size:11.5px;line-height:1.66;color:var(--ink-3);font-weight:5
     <div class="school-chips" id="schoolChips"></div>
     <div class="entries" id="philList"></div>
   </section>
+
+  <!-- 상담·문의 -->
+  <section class="sec" id="contact">
+    <div class="sec-head"><span class="eyebrow">Inquiry</span><h2>상담 · 문의</h2><p class="sec-sub">지금 겪고 계신 질문을 남겨 주세요</p></div>
+    <div class="contact-card">
+      <p class="contact-lead">깊이 다루고 싶은 질문이 있으시면 아래에 남겨 주세요. 영업일 2일 이내에 1차 회신을 드립니다. 내용을 읽고, 저희가 도울 수 있는 질문인지 먼저 정직하게 말씀드립니다.</p>
+
+      <form class="cf" id="cfForm" novalidate>
+        <input class="hp" id="cfHoney" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+
+        <div>
+          <label class="cf-lab" for="cfCat">문의 구분 <span class="req">*</span></label>
+          <select class="cf-sel" id="cfCat" required>
+            <option value="일반문의">일반 문의</option>
+            <option value="개인·심층컨설팅">개인 · 1:1 심층 컨설팅</option>
+            <option value="개인·단건리포트">개인 · 단건 심층 리포트</option>
+            <option value="개인·구독">개인 · 말씀 받기 구독</option>
+            <option value="조직·워크숍">조직 · 워크숍</option>
+            <option value="조직·프로그램">조직 · 프로그램</option>
+            <option value="제휴·협업">제휴 · 협업</option>
+          </select>
+        </div>
+
+        <div>
+          <span class="cf-lab">지금의 마음 <span style="color:var(--ink-3);font-weight:500;letter-spacing:0;text-transform:none">(선택 · 복수 가능)</span></span>
+          <div class="cf-chips" id="cfChips"></div>
+        </div>
+
+        <div class="cf-row">
+          <div>
+            <label class="cf-lab" for="cfName">이름 <span class="req">*</span></label>
+            <input class="cf-in" id="cfName" type="text" autocomplete="name" placeholder="성함" required>
+          </div>
+          <div>
+            <label class="cf-lab" for="cfEmail">이메일 <span class="req">*</span></label>
+            <input class="cf-in" id="cfEmail" type="email" autocomplete="email" placeholder="name@example.com" required>
+          </div>
+        </div>
+
+        <div class="cf-row">
+          <div>
+            <label class="cf-lab" for="cfPhone">연락처 <span style="color:var(--ink-3);font-weight:500;letter-spacing:0;text-transform:none">(선택)</span></label>
+            <input class="cf-in" id="cfPhone" type="tel" autocomplete="tel" placeholder="010-0000-0000">
+          </div>
+          <div>
+            <label class="cf-lab" for="cfCompany">소속 · 조직 <span style="color:var(--ink-3);font-weight:500;letter-spacing:0;text-transform:none">(선택)</span></label>
+            <input class="cf-in" id="cfCompany" type="text" autocomplete="organization" placeholder="조직 문의인 경우">
+          </div>
+        </div>
+
+        <div>
+          <label class="cf-lab" for="cfMsg">문의 내용 <span class="req">*</span></label>
+          <textarea class="cf-ta" id="cfMsg" required placeholder="어떤 상황에서 어떤 질문이 생겼는지 편하게 적어 주세요.&#10;&#10;예) 5년 다닌 회사를 그만두고 창업을 준비하는데, 확신이 아니라 도피처럼 느껴져 결정을 못 하고 있습니다."></textarea>
+        </div>
+
+        <label class="cf-agree">
+          <input type="checkbox" id="cfAgree">
+          <span><b>개인정보 수집·이용에 동의합니다.</b> 상담 회신을 위해 이름·연락처·문의 내용을 수집하며, 문의 종결 후 1년간 보관 뒤 파기합니다. 동의를 거부하실 수 있으나 이 경우 회신이 어렵습니다.</span>
+        </label>
+
+        <button class="cf-submit" id="cfSubmit" type="submit">문의 남기기</button>
+        <p class="cf-msg" id="cfMsgOut" role="status" aria-live="polite"></p>
+      </form>
+
+      <p class="cf-fine">투자·법률·의료·세무의 판단이 실제로 필요한 사안은 저희가 답하지 않고 해당 자격을 갖춘 기관을 안내해 드립니다. 저희는 질문의 구조를 함께 살피는 일을 합니다.</p>
+    </div>
+  </section>
 </div>
 
 <footer>
@@ -377,6 +931,84 @@ footer .fnote{font-size:11.5px;line-height:1.66;color:var(--ink-3);font-weight:5
     <p class="fnote">구절 인용은 한국어 성경 번역 전통을 따르며, 인접 학문의 통찰은 검증된 연구에 근거합니다. 조언은 실시간 생성이 아닌 검증된 큐레이션으로 제공됩니다.<br>본 서비스는 개인 창작 프로젝트이며, 특정 교회·기관의 공식 서비스가 아닙니다. © 2026 Yubin Kim.</p>
   </div>
 </footer>
+
+
+<!-- 상담 챗봇 -->
+<button class="chat-fab" id="chatFab" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="chatPanel">
+  <svg viewBox="0 0 16 22" fill="none" aria-hidden="true"><path d="M8 1v20M2 7h12" stroke="var(--gold-2)" stroke-width="1.7" stroke-linecap="round"/></svg>
+  <span class="fab-t">상담하기</span>
+</button>
+
+<div class="chat-scrim" id="chatScrim" hidden></div>
+
+<div class="chat-panel" id="chatPanel" role="dialog" aria-modal="false" aria-label="Salvation 상담실" hidden>
+  <div class="chat-head">
+    <span class="chat-ribbon" aria-hidden="true"></span>
+    <svg class="chat-cross" viewBox="0 0 18 24" fill="none" aria-hidden="true"><path d="M9 1.5v21M3 8.5h12" stroke="var(--gold-2)" stroke-width="1.6" stroke-linecap="round"/></svg>
+    <div class="chat-ttl"><b>상담실</b><span>Salvation</span></div>
+    <button class="chat-x" id="chatX" type="button" aria-label="상담실 닫기">✕</button>
+  </div>
+
+  <div class="chat-body" id="chatBody" role="log" aria-live="polite" aria-relevant="additions"></div>
+
+  <div class="chat-foot">
+    <div class="chat-inrow">
+      <textarea class="chat-ta" id="chatIn" rows="1" placeholder="편하게 적어 주세요" aria-label="메시지 입력" disabled></textarea>
+      <button class="chat-send" id="chatSend" type="button" aria-label="보내기" disabled>
+        <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M3 10 17 3l-4.2 14-2.6-5.2L3 10Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+    <p class="chat-note">상담실은 검증된 안내로 응대하며 실시간 생성 답변이 아닙니다. 남겨 주신 내용은 상담 회신 목적으로만 사용합니다.</p>
+  </div>
+</div>
+
+<!-- AUTH MODAL -->
+<div class="auth-modal" id="authModal" hidden>
+  <div class="auth-card" role="dialog" aria-modal="true" aria-label="계정">
+    <button class="auth-close" id="authClose" type="button" aria-label="닫기">✕</button>
+    <div class="auth-brand"><svg viewBox="0 0 16 22" fill="none" aria-hidden="true"><path d="M8 1v20M2 7h12" stroke="var(--gold)" stroke-width="1.7" stroke-linecap="round"/></svg><span>Salvation</span></div>
+    <div id="authLogin">
+      <p class="auth-lead">간직한 말씀을 어느 기기에서나.</p>
+      <div class="auth-tabs" id="authTabs">
+        <button class="auth-tab" data-mode="login" type="button" aria-selected="true">로그인</button>
+        <button class="auth-tab" data-mode="signup" type="button" aria-selected="false">회원가입</button>
+      </div>
+      <form class="auth-form" id="authForm">
+        <input class="auth-in" id="authName" type="text" placeholder="이름 (표시용)" autocomplete="name" hidden>
+        <input class="auth-in" id="authEmail" type="email" placeholder="이메일" autocomplete="email" required>
+        <input class="auth-in" id="authPw" type="password" placeholder="비밀번호 (6자 이상)" autocomplete="current-password" required>
+        <button class="auth-submit" id="authSubmit" type="submit">로그인</button>
+      </form>
+      <div class="auth-alt"><span>또는</span></div>
+      <button class="auth-2nd" id="authMagic" type="button">비밀번호 없이 메일로 로그인</button>
+      <button class="auth-mini" id="authForgot" type="button">비밀번호를 잊으셨나요?</button>
+      <p class="auth-msg" id="authMsg"></p>
+      <p class="auth-switch" id="authSwitch"></p>
+    </div>
+    <div id="authAccount" hidden>
+      <p class="auth-lead" id="authHi"></p>
+      <div class="acct-stats" id="acctStats"></div>
+      <div class="acct-name">
+        <input class="auth-in" id="acctNameIn" type="text" maxlength="40" placeholder="표시 이름" autocomplete="name">
+        <button id="acctNameGo" type="button">변경</button>
+      </div>
+      <div class="acct-tools">
+        <button id="acctSanctum" type="button">나의 성소 열기</button>
+        <button id="acctExport" type="button">내 기록 내려받기</button>
+      </div>
+      <button class="auth-submit" id="authLogout" type="button">로그아웃</button>
+      <p class="acct-sync" id="acctSync"></p>
+    </div>
+    <div id="authReset" hidden>
+      <p class="auth-lead">새 비밀번호를 정해 주세요.</p>
+      <form class="auth-form" onsubmit="return false">
+        <input class="auth-in" id="authNewPw" type="password" placeholder="새 비밀번호 (6자 이상)" autocomplete="new-password">
+        <button class="auth-submit" id="authResetGo" type="button">비밀번호 변경</button>
+      </form>
+      <p class="auth-msg" id="authResetMsg"></p>
+    </div>
+  </div>
+</div>
 
 <!-- REVEAL RITUAL -->
 <div class="reveal" id="reveal" hidden>
@@ -583,8 +1215,13 @@ const PHIL=[
  {sc:6,q:"믿음은 바라는 것들의 실상이요, 보이지 않는 것들의 증거니.",src:"히브리서 11:1 · 신앙의 정의",a:"이성이 멈추는 자리에서 믿음이 시작됩니다. 아는 것과 믿는 것은 서로를 배척하지 않습니다.",n:"키르케고르·파스칼·칸트 모두, 이성의 한계에서 신앙의 자리를 발견했습니다."}
 ];
 
-const LS_FAV="mg_fav_v1", LS_THEME="mg_theme_v1";
-let favs=load(LS_FAV,[]);
+const SB_URL="https://byehxiqenirrbtbbbkfw.supabase.co";
+const SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ5ZWh4aXFlbmlycmJ0YmJia2Z3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg4NDY2NTQsImV4cCI6MjEwNDQyMjY1NH0.3GEzhBl8d4XOdlBOcs94Id36ZgY5yTgMvdDgF4jUJOU";
+let sb=null;
+try{ if(window.supabase&&window.supabase.createClient) sb=window.supabase.createClient(SB_URL,SB_KEY); }catch(_){}
+let user=null, authMode="login";
+const LS_SAVED="salv_saved_v1", LS_THEME="mg_theme_v1", LS_FAV="mg_fav_v1";
+let SAVED=new Map();
 let activeDomain=0, onlyFav=false, query="";
 const lastShown={};
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
@@ -593,6 +1230,138 @@ function save(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(_){}}
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
 function norm(t){return t.toLowerCase().replace(/\s+/g," ").trim();}
 function reduced(){return matchMedia("(prefers-reduced-motion:reduce)").matches;}
+
+/* ================= 말씀 저장 (save / library) ================= */
+function itemOfEntry(e){return{kind:"scripture",ref:e.r,verse:e.v,domain:DOMAINS[e.d-1].ko};}
+function itemOfPhil(p){return{kind:"wisdom",ref:p.src,verse:p.q,domain:SCHOOLS[p.sc-1]};}
+function keyOf(it){return it.kind+"§"+it.ref+"§"+it.verse;}
+function isSaved(it){return SAVED.has(keyOf(it));}
+function savedScriptureCount(){let n=0;SAVED.forEach(v=>{if(v.kind==="scripture")n++;});return n;}
+function saveLocal(){save(LS_SAVED,[...SAVED.values()]);}
+function loadSaved(){
+  SAVED=new Map();
+  const arr=load(LS_SAVED,null);
+  if(Array.isArray(arr)){arr.forEach(it=>{if(it&&it.ref&&it.verse){it.kind=it.kind||"scripture";SAVED.set(keyOf(it),it);}});}
+  else{ /* 이전 버전(즐겨찾기) 1회 이전 */
+    const old=load(LS_FAV,null);
+    if(Array.isArray(old)&&old.length){old.forEach(id=>{const e=E[id];if(e){const it=itemOfEntry(e);it.created_at=Date.now();SAVED.set(keyOf(it),it);}});if(SAVED.size)saveLocal();}
+  }
+}
+function toggleSave(it){
+  const k=keyOf(it), had=SAVED.has(k);
+  if(had)SAVED.delete(k);
+  else{ it.created_at=it.created_at||Date.now(); SAVED.set(k,it); }
+  saveLocal(); refreshSaveUI();
+  if(user&&sb){
+    (async()=>{try{
+      if(had)await sb.from("saved_verses").delete().eq("kind",it.kind).eq("ref",it.ref).eq("verse",it.verse);
+      else await sb.from("saved_verses").insert({user_id:user.id,kind:it.kind,ref:it.ref,verse:it.verse,domain:it.domain||null});
+    }catch(_){}})();
+  }
+}
+function refreshSaveUI(){paintFav();renderSaved();renderEntries();renderToday();renderPhil();}
+function renderSaved(){
+  const el=$("#savedList");if(!el)return;
+  const items=[...SAVED.values()].sort((a,b)=>(b.created_at||0)-(a.created_at||0));
+  const sub=$("#mylibSub");
+  if(!items.length){
+    el.innerHTML=`<div class="saved-empty">아직 간직한 말씀이 없습니다.<br>마음에 닿는 구절의 ♡를 눌러 이곳에 모아보세요.</div>`;
+    if(sub)sub.textContent=user?`${user_label()} 님의 서재`:"간직한 말씀이 여기에 모입니다";
+    return;
+  }
+  el.innerHTML=items.map((it,i)=>`<div class="saved-item">
+    <span class="saved-kind">${it.kind==="wisdom"?"인문학의 지혜":(it.domain?esc(it.domain):"말씀")}</span>
+    <p class="saved-verse">${esc(it.verse)}</p>
+    <p class="saved-ref">${esc(it.ref)}</p>
+    <button class="saved-x" type="button" aria-label="서재에서 빼기" data-i="${i}">✕</button>
+  </div>`).join("");
+  $$("#savedList .saved-x").forEach(b=>b.addEventListener("click",()=>{const it=items[+b.dataset.i];if(it)toggleSave(it);}));
+  if(sub)sub.textContent=user?`${user_label()} 님의 서재 · ${items.length}편`:`간직한 말씀 ${items.length}편 · 이 기기에 저장됨`;
+}
+
+/* ================= 계정 (Supabase auth) ================= */
+function user_label(){if(!user)return"로그인";const m=user.user_metadata||{};return m.name||m.full_name||(user.email?user.email.split("@")[0]:"내 계정");}
+function paintAcct(){const b=$("#acctBtn");if(!b)return;b.textContent=user?user_label():"로그인";b.classList.toggle("in",!!user);}
+function authMsgSet(t,cls){const m=$("#authMsg");if(!m)return;m.textContent=t||"";m.className="auth-msg"+(cls?(" "+cls):"");}
+function authErr(t){authMsgSet(t,"err");}
+function friendlyAuthErr(err){
+  const m=((err&&err.message)||"").toLowerCase();
+  if(m.includes("failed to fetch")||m.includes("networkerror")||m.includes("load failed")||(err&&err.name==="TypeError"))
+    return "이 미리보기에서는 로그인이 제한됩니다. 배포된 주소(GitHub Pages)에서 이용해 주세요.";
+  if(m.includes("invalid login"))return "이메일 또는 비밀번호가 올바르지 않습니다.";
+  if(m.includes("already registered")||m.includes("already been registered"))return "이미 가입된 이메일입니다. 로그인해 주세요.";
+  if(m.includes("email not confirmed"))return "이메일 인증이 필요합니다. 받은 메일함을 확인해 주세요.";
+  if(m.includes("password"))return "비밀번호는 6자 이상이어야 합니다.";
+  return (err&&err.message)?err.message:"문제가 발생했습니다. 잠시 후 다시 시도해 주세요.";
+}
+function authSetMode(mode){
+  authMode=mode;
+  $$("#authTabs .auth-tab").forEach(t=>t.setAttribute("aria-selected",String(t.dataset.mode===mode)));
+  $("#authName").hidden=mode!=="signup";
+  $("#authPw").setAttribute("autocomplete",mode==="signup"?"new-password":"current-password");
+  $("#authSubmit").textContent=mode==="signup"?"회원가입":"로그인";
+  $("#authSwitch").innerHTML=mode==="signup"
+    ? '이미 계정이 있으신가요? <b id="authSwitchBtn">로그인</b>'
+    : '아직 계정이 없으신가요? <b id="authSwitchBtn">회원가입</b>';
+  const sw=$("#authSwitchBtn");if(sw)sw.addEventListener("click",()=>authSetMode(mode==="signup"?"login":"signup"));
+  authMsgSet("");
+}
+function showLogin(){$("#authAccount").hidden=true;$("#authLogin").hidden=false;authSetMode(authMode);}
+function showAccount(){$("#authLogin").hidden=true;$("#authAccount").hidden=false;$("#authHi").innerHTML=`<b style="color:var(--wine)">${esc(user_label())}</b> 님, 환영합니다.<br>간직한 말씀이 이 계정에 안전하게 보관됩니다.`;}
+function openAuth(){const m=$("#authModal");if(user)showAccount();else showLogin();m.hidden=false;requestAnimationFrame(()=>m.classList.add("open"));if(!user)setTimeout(()=>{try{$("#authEmail").focus();}catch(_){}} ,150);}
+function closeAuth(){const m=$("#authModal");m.classList.remove("open");setTimeout(()=>{m.hidden=true;},300);}
+async function afterAuth(){paintAcct();authMsgSet("환영합니다.","ok");await pullCloud();setTimeout(closeAuth,700);}
+async function authSubmit(ev){
+  ev.preventDefault();
+  if(!sb){authErr("이 미리보기에서는 로그인이 제한됩니다. 배포된 주소(GitHub Pages)에서 이용해 주세요.");return;}
+  const email=$("#authEmail").value.trim(), pw=$("#authPw").value;
+  if(!email||pw.length<6){authErr("이메일과 6자 이상 비밀번호를 입력해 주세요.");return;}
+  const btn=$("#authSubmit");btn.disabled=true;authMsgSet("처리 중…","");
+  try{
+    if(authMode==="signup"){
+      const name=$("#authName").value.trim();
+      const {data,error}=await sb.auth.signUp({email,password:pw,options:{data:{name:name||email.split("@")[0]}}});
+      if(error)throw error;
+      if(data&&data.session){user=data.user;await afterAuth();}
+      else{authMsgSet("확인 메일을 보냈습니다. 메일 인증 후 로그인해 주세요.","ok");authSetMode("login");}
+    }else{
+      const {data,error}=await sb.auth.signInWithPassword({email,password:pw});
+      if(error)throw error;
+      user=data.user;await afterAuth();
+    }
+  }catch(err){authErr(friendlyAuthErr(err));}
+  finally{btn.disabled=false;}
+}
+async function doLogout(){try{if(sb)await sb.auth.signOut();}catch(_){}user=null;paintAcct();loadSaved();refreshSaveUI();closeAuth();}
+async function pullCloud(){
+  if(!(user&&sb))return;
+  try{
+    const locals=[...SAVED.values()];
+    const {data,error}=await sb.from("saved_verses").select("*");
+    if(error)throw error;
+    const cloud=new Map();
+    (data||[]).forEach(row=>{const it={kind:row.kind||"scripture",ref:row.ref,verse:row.verse,domain:row.domain,note:row.note,created_at:row.created_at?new Date(row.created_at).getTime():Date.now(),rid:row.id};cloud.set(keyOf(it),it);});
+    const toPush=locals.filter(it=>!cloud.has(keyOf(it)));
+    if(toPush.length){
+      try{await sb.from("saved_verses").insert(toPush.map(it=>({user_id:user.id,kind:it.kind,ref:it.ref,verse:it.verse,domain:it.domain||null})));}catch(_){}
+      toPush.forEach(it=>cloud.set(keyOf(it),it));
+    }
+    SAVED=cloud;saveLocal();refreshSaveUI();
+  }catch(_){}
+}
+async function initAuth(){
+  $("#acctBtn").addEventListener("click",openAuth);
+  $("#authClose").addEventListener("click",closeAuth);
+  $("#authModal").addEventListener("click",e=>{if(e.target.id==="authModal")closeAuth();});
+  $("#authForm").addEventListener("submit",authSubmit);
+  $("#authLogout").addEventListener("click",doLogout);
+  $$("#authTabs .auth-tab").forEach(t=>t.addEventListener("click",()=>authSetMode(t.dataset.mode)));
+  authSetMode("login");paintAcct();
+  if(sb){
+    try{const {data}=await sb.auth.getSession();if(data&&data.session){user=data.session.user;paintAcct();await pullCloud();}}catch(_){}
+    try{sb.auth.onAuthStateChange((_e,session)=>{user=session?session.user:null;paintAcct();});}catch(_){}
+  }
+}
 
 /* theme */
 function curTheme(){const e=document.documentElement.getAttribute("data-theme");return e?e:(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light");}
@@ -649,6 +1418,7 @@ $("#rvContinue").addEventListener("click",()=>closeReveal(true));
 
 function renderResult(sit,vid){
   const e=E[vid],d=DOMAINS[e.d-1];
+  const eit=itemOfEntry(e), savedE=isSaved(eit);
   const others=sit.v.filter(x=>x!==vid).slice(0,3).map(x=>E[x]);
   const r=$("#result");r.className="result pop";
   r.innerHTML=`
@@ -663,14 +1433,14 @@ function renderResult(sit,vid){
     <div class="insight"><div class="lbl">마음이 놓이는 근거 · 혜안</div><p>${esc(e.i)}</p></div>
     ${sit.p?`<div class="mirror"><div class="lbl">인문학의 거울 · The Mirror</div><p>${esc(sit.p)}</p></div>`:''}
     <div class="res-actions">
-      <button type="button" id="saveAdvice" class="${favs.includes(e.id)?'on':''}">${favs.includes(e.id)?'✦ 간직함':'♡ 이 말씀 간직'}</button>
+      <button type="button" id="saveAdvice" class="${savedE?'on':''}">${savedE?'✦ 간직함':'♡ 이 말씀 간직'}</button>
       <button type="button" id="againBtn">다른 말씀 보기</button>
       ${others.length?`<button type="button" id="moreBtn">관련 ${others.length}</button>`:''}
     </div>
     ${others.length?`<div class="more-verses" id="moreV" hidden>${others.map(o=>`<div class="mini-v"><div class="mt">${esc(o.v)}</div><div class="mr">${esc(o.r)}</div></div>`).join("")}</div>`:''}
   `;
   r.hidden=false;
-  const sa=$("#saveAdvice");sa.addEventListener("click",()=>{toggleFav(e.id);sa.className=favs.includes(e.id)?'on':'';sa.textContent=favs.includes(e.id)?'✦ 간직함':'♡ 이 말씀 간직';});
+  const sa=$("#saveAdvice");sa.addEventListener("click",()=>{toggleSave(eit);const on=isSaved(eit);sa.className=on?'on':'';sa.textContent=on?'✦ 간직함':'♡ 이 말씀 간직';});
   $("#againBtn").addEventListener("click",()=>openReveal(sit));
   const mb=$("#moreBtn");if(mb)mb.addEventListener("click",()=>{const m=$("#moreV");m.hidden=!m.hidden;mb.textContent=m.hidden?`관련 ${others.length}`:"접기";});
   setTimeout(()=>r.scrollIntoView({behavior:"smooth",block:"start"}),60);
@@ -688,7 +1458,7 @@ function renderMindChips(){
 function dayIndex(){const n=new Date();const s=new Date(n.getFullYear(),0,0);return Math.floor((n-s)/86400000)%E.length;}
 let todayId=dayIndex();
 function renderToday(){
-  const e=E[todayId],d=DOMAINS[e.d-1],on=favs.includes(e.id);
+  const e=E[todayId],d=DOMAINS[e.d-1],on=isSaved(itemOfEntry(e));
   const dt=new Date().toLocaleDateString("ko-KR",{month:"long",day:"numeric",weekday:"long"});
   $("#today").innerHTML=`
     <div class="tl"><span class="date">${dt}</span><span class="badge">${d.ko}</span></div>
@@ -699,12 +1469,11 @@ function renderToday(){
       <button type="button" id="todaySave" class="${on?'on':''}">${on?'✦ 간직함':'♡ 간직하기'}</button>
     </div>`;
   $("#todayMore").addEventListener("click",()=>{let n;do{n=Math.floor(Math.random()*E.length);}while(n===todayId&&E.length>1);todayId=n;renderToday();});
-  $("#todaySave").addEventListener("click",()=>{toggleFav(todayId);renderToday();});
+  $("#todaySave").addEventListener("click",()=>toggleSave(itemOfEntry(E[todayId])));
 }
 
-/* favorites */
-function toggleFav(id){const i=favs.indexOf(id);if(i>=0)favs.splice(i,1);else favs.push(id);save(LS_FAV,favs);paintFav();renderEntries();}
-function paintFav(){const t=$("#favToggle");t.setAttribute("aria-pressed",String(onlyFav));t.textContent=(onlyFav?"♥":"♡")+" 간직한 말씀"+(favs.length?` ${favs.length}`:"");}
+/* library filter */
+function paintFav(){const t=$("#favToggle");if(!t)return;const n=savedScriptureCount();t.setAttribute("aria-pressed",String(onlyFav));t.textContent=(onlyFav?"♥":"♡")+" 간직한 말씀"+(n?` ${n}`:"");}
 $("#favToggle").addEventListener("click",()=>{onlyFav=!onlyFav;paintFav();renderEntries();});
 
 /* domains */
@@ -725,11 +1494,11 @@ function paintDom(){$$(".dom-card").forEach(el=>el.setAttribute("aria-pressed",S
 
 /* search + entries */
 $("#searchInput").addEventListener("input",e=>{query=norm(e.target.value);renderEntries();});
-function match(e){if(activeDomain&&e.d!==activeDomain)return false;if(onlyFav&&!favs.includes(e.id))return false;if(query){const h=norm(e.t+" "+e.v+" "+e.r+" "+e.a+" "+e.i+" "+DOMAINS[e.d-1].ko);if(!h.includes(query))return false;}return true;}
+function match(e){if(activeDomain&&e.d!==activeDomain)return false;if(onlyFav&&!isSaved(itemOfEntry(e)))return false;if(query){const h=norm(e.t+" "+e.v+" "+e.r+" "+e.a+" "+e.i+" "+DOMAINS[e.d-1].ko);if(!h.includes(query))return false;}return true;}
 function renderEntries(){
   const list=E.filter(match);$("#count").textContent=`${list.length}편`;
   if(!list.length){$("#entries").innerHTML=`<p class="empty">해당하는 말씀이 없습니다.<br>다른 주제나 검색어로 살펴보세요.</p>`;return;}
-  $("#entries").innerHTML=list.map(e=>{const d=DOMAINS[e.d-1],on=favs.includes(e.id);
+  $("#entries").innerHTML=list.map(e=>{const d=DOMAINS[e.d-1],on=isSaved(itemOfEntry(e));
     return `<article class="entry">
       <div class="etop"><span class="etag"><span class="rn">${d.n}</span>${d.ko}</span>
       <button class="star ${on?'on':''}" type="button" aria-pressed="${on}" aria-label="간직하기" data-id="${e.id}">${on?'★':'☆'}</button></div>
@@ -738,7 +1507,7 @@ function renderEntries(){
       <div class="eblock"><div class="lbl">삶으로</div><p>${esc(e.a)}</p></div>
       <div class="eblock ins"><div class="lbl">혜안</div><p>${esc(e.i)}</p></div>
     </article>`;}).join("");
-  $$(".entry .star").forEach(s=>s.addEventListener("click",()=>toggleFav(+s.dataset.id)));
+  $$("#entries .star").forEach(s=>s.addEventListener("click",()=>toggleSave(itemOfEntry(E[+s.dataset.id]))));
 }
 
 /* init */
@@ -752,16 +1521,1298 @@ function renderSchoolChips(){
 }
 function renderPhil(){
   const list=PHIL.filter(p=>!activeSchool||p.sc===activeSchool);
-  $("#philList").innerHTML=list.map(p=>`<article class="entry phil">
-      <div class="etop"><span class="etag"><span class="rn">❋</span>${SCHOOLS[p.sc-1]}</span></div>
+  $("#philList").innerHTML=list.map(p=>{const it=itemOfPhil(p),on=isSaved(it);
+    return `<article class="entry phil">
+      <div class="etop"><span class="etag"><span class="rn">❋</span>${esc(SCHOOLS[p.sc-1])}</span>
+      <button class="star ${on?'on':''}" type="button" aria-pressed="${on}" aria-label="간직하기" data-pid="${PHIL.indexOf(p)}">${on?'★':'☆'}</button></div>
       <p class="vtext">“${esc(p.q)}”</p><p class="vref">${esc(p.src)}</p>
       <div class="div"></div>
       <div class="eblock"><div class="lbl">삶으로</div><p>${esc(p.a)}</p></div>
       <div class="eblock ins"><div class="lbl">깊이 보기</div><p>${esc(p.n)}</p></div>
-    </article>`).join("");
+    </article>`;}).join("");
+  $$("#philList .star").forEach(s=>s.addEventListener("click",()=>toggleSave(itemOfPhil(PHIL[+s.dataset.pid]))));
 }
 
-renderMindChips();renderToday();renderDomains();paintFav();renderEntries();renderSchoolChips();renderPhil();
+loadSaved();renderMindChips();renderToday();renderDomains();paintFav();renderEntries();renderSaved();renderSchoolChips();renderPhil();initAuth();
+</script>
+
+
+<script>
+/* ============================================================
+   Salvation CRM 연동 — 상담 챗봇 · 문의폼 · Airtable/Telegram
+   ------------------------------------------------------------
+   비밀값은 이 파일에 없다. 모든 쓰기는 /api/lead, /api/risk 를 거친다.
+   ============================================================ */
+(function(){
+"use strict";
+
+/* ── 설정 ─────────────────────────────────────────────────── */
+// 사이트를 Vercel이 아닌 곳(GitHub Pages 등)에 올렸다면 여기에 Vercel 주소를 적는다.
+// 예) var API_BASE = "https://salvation.vercel.app";
+var API_BASE = (window.SALV_API_BASE || "").replace(/\/+$/, "");
+// 서버 접수가 불가능할 때 안내할 대체 연락처. 비워 두면 안내 문구만 나간다.
+var FALLBACK_EMAIL = "";
+
+var CHIPS = ["투자 손실","시험 불안","지치고 번아웃","관계의 상처","결정이 어렵습니다","돈 걱정","미래가 막막","화가 납니다","자꾸 비교됩니다","미루게 됩니다"];
+var CATS = [
+  {v:"개인·심층컨설팅", t:"1:1 심층 컨설팅"},
+  {v:"개인·단건리포트", t:"단건 심층 리포트"},
+  {v:"개인·구독",       t:"말씀 받기 구독"},
+  {v:"조직·워크숍",     t:"조직 워크숍"},
+  {v:"조직·프로그램",   t:"조직 프로그램"},
+  {v:"제휴·협업",       t:"제휴 · 협업"},
+  {v:"일반문의",        t:"그 밖의 문의"}
+];
+
+/* 위기 신호 — service-policy.md §14.1. 서버(_crm.js)와 같은 기준을 쓴다. */
+var CRISIS_RE = [
+  {type:"자살·자해 신호", re:/(자살|극단적\s*선택|죽고\s*싶|죽어\s*버리고\s*싶|살고\s*싶지\s*않|살기\s*싫|사라지고\s*싶|없어지고\s*싶|목숨을\s*끊|목\s*을?\s*매|뛰어내리|투신|유서|수면제를?\s*모으|약을\s*모으|자해|손목을?\s*긋)/},
+  {type:"타인 가해 의도", re:/(죽여\s*버리|해치고\s*싶|칼로\s*찌르|불을\s*지르|보복하겠|복수하겠)/},
+  {type:"학대 피해 노출", re:/(학대\s*(당|받|를\s*당)|성폭행|성추행|강간|맞고\s*있|폭행\s*당|감금\s*당|가정\s*폭력)/}
+];
+var RESOURCES = [
+  {name:"자살예방 상담전화", tel:"109",       note:"24시간 · 무료"},
+  {name:"정신건강 상담전화", tel:"1577-0199", note:"24시간 · 지역 정신건강복지센터"},
+  {name:"생명의전화",        tel:"1588-9191", note:"24시간"},
+  {name:"청소년 전화",       tel:"1388",      note:"24시간 · 만 9~24세"},
+  {name:"응급의료",          tel:"119",       note:"생명이 위급할 때"}
+];
+function detectCrisis(t){
+  var s = String(t||"").replace(/\s+/g," ");
+  if(!s) return null;
+  for(var i=0;i<CRISIS_RE.length;i++) if(CRISIS_RE[i].re.test(s)) return CRISIS_RE[i].type;
+  return null;
+}
+
+/* ── 유틸 ─────────────────────────────────────────────────── */
+var $ = function(s,r){ return (r||document).querySelector(s); };
+function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function el(tag,cls,html){ var n=document.createElement(tag); if(cls) n.className=cls; if(html!=null) n.innerHTML=html; return n; }
+function wait(ms){ return new Promise(function(r){ setTimeout(r,ms); }); }
+function validEmail(s){ return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(s||"").trim()); }
+
+function post(path, payload){
+  return fetch(API_BASE + path, {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body: JSON.stringify(payload)
+  }).then(function(r){
+    return r.json().catch(function(){ return {}; }).then(function(j){
+      if(!r.ok && !j.ok) throw new Error(j.error || ("접수 서버 오류 (" + r.status + ")"));
+      return j;
+    });
+  });
+}
+function failText(e){
+  var base = (e && e.message) ? e.message : "네트워크 연결을 확인해 주세요.";
+  if(FALLBACK_EMAIL) return base + " 계속 실패하면 " + FALLBACK_EMAIL + " 으로 보내 주셔도 됩니다.";
+  return base;
+}
+
+/* 위기 사건은 화면 안내가 먼저다. 서버 기록 실패는 사용자에게 노출하지 않는다. */
+function reportRisk(type, channel){
+  // 판정은 화면에서 끝났으므로 원문은 서버로 보내지 않는다 (service-policy.md §8.2).
+  try{
+    post("/api/risk", {type:type, channel:channel||"플랫폼 문답 입력"})["catch"](function(){});
+  }catch(_){}
+}
+
+function crisisNode(){
+  var box = el("div","crisis");
+  var h = el("div","crisis-h",
+    "<b>잠시 멈추겠습니다</b>" +
+    "<span>지금은 말씀을 함께 읽는 일보다, 곁에 있어 줄 사람이 먼저 필요해 보입니다. " +
+    "아래 번호는 24시간 연결되고, 비용이 들지 않습니다. 지금 한 곳에 연락해 주세요.</span>");
+  box.appendChild(h);
+  RESOURCES.forEach(function(r){
+    var a = el("a","crisis-l",
+      '<span class="nm">' + esc(r.name) + '<span class="nt">' + esc(r.note) + '</span></span>' +
+      '<span class="tl">' + esc(r.tel) + '</span>');
+    a.href = "tel:" + r.tel.replace(/-/g,"");
+    box.appendChild(a);
+  });
+  box.appendChild(el("div","crisis-f",
+    "Salvation은 위기 상황에서 전문기관의 개입을 대체하지 않습니다. " +
+    "안전이 확보된 뒤, 원하실 때 언제든 다시 찾아와 주세요. " +
+    "적어 주신 내용은 저장하지 않았습니다."));
+  return box;
+}
+
+/* ============================================================
+   1) 상담 챗봇
+   ============================================================ */
+var fab = $("#chatFab"), panel = $("#chatPanel"), scrim = $("#chatScrim"),
+    body = $("#chatBody"), input = $("#chatIn"), sendBtn = $("#chatSend"), closeBtn = $("#chatX");
+
+if(fab && panel && body){
+
+  var data = { chips:[], message:"", category:"", name:"", email:"", phone:"", company:"" };
+  var step = "idle", started = false, busy = false, ended = false;
+
+  function scrollEnd(){
+    body.scrollTop = body.scrollHeight;
+    requestAnimationFrame(function(){ body.scrollTop = body.scrollHeight; });
+  }
+
+  function say(html, opts){
+    var row = el("div","cmsg");
+    row.appendChild(el("div","cav",'<svg viewBox="0 0 16 22" fill="none" aria-hidden="true"><path d="M8 2v18M3 8h10" stroke="var(--gold-2)" stroke-width="1.7" stroke-linecap="round"/></svg>'));
+    row.appendChild(el("div","cbub",html));
+    body.appendChild(row);
+    scrollEnd();
+    if(opts && opts.node) { body.appendChild(opts.node); scrollEnd(); }
+    return row;
+  }
+  function me(text){
+    var row = el("div","cmsg me");
+    row.appendChild(el("div","cbub",esc(text)));
+    body.appendChild(row); scrollEnd();
+  }
+  function typing(){
+    var row = el("div","cmsg");
+    row.appendChild(el("div","cav",'<svg viewBox="0 0 16 22" fill="none" aria-hidden="true"><path d="M8 2v18M3 8h10" stroke="var(--gold-2)" stroke-width="1.7" stroke-linecap="round"/></svg>'));
+    row.appendChild(el("div","cbub",'<span class="ctyping"><i></i><i></i><i></i></span>'));
+    body.appendChild(row); scrollEnd();
+    return row;
+  }
+  function bot(html, ms){
+    var t = typing();
+    return wait(ms || 620).then(function(){
+      t.remove();
+      say(html);
+    });
+  }
+  function clearOpts(){
+    Array.prototype.slice.call(body.querySelectorAll(".copts,.cform")).forEach(function(n){ n.remove(); });
+  }
+  function opts(){
+    var wrap = el("div","copts");
+    body.appendChild(wrap); scrollEnd();
+    return wrap;
+  }
+  function optBtn(wrap, label, cls){
+    var b = el("button", "copt" + (cls ? " " + cls : ""), esc(label));
+    b.type = "button";
+    wrap.appendChild(b);
+    return b;
+  }
+
+  function setInput(on, ph){
+    input.disabled = !on;
+    sendBtn.disabled = !on;
+    input.placeholder = ph || "편하게 적어 주세요";
+    if(on) setTimeout(function(){ try{ input.focus({preventScroll:true}); }catch(_){ input.focus(); } }, 60);
+  }
+
+  function halt(type, report){
+    ended = true;
+    clearOpts();
+    setInput(false, "상담이 중단되었습니다");
+    if(report !== false) reportRisk(type, "플랫폼 문답 입력");
+    body.appendChild(crisisNode());
+    scrollEnd();
+  }
+
+  /* ── 단계 ──────────────────────────────────────────────── */
+  function stepChips(){
+    step = "chips";
+    bot("안녕하세요. Salvation 상담실입니다.\n\n무엇이든 정리되지 않은 채로 오셔도 괜찮습니다. 먼저, <b>지금 어떤 마음</b>에 가까우신가요?").then(function(){
+      var wrap = opts();
+      CHIPS.forEach(function(c){
+        var b = optBtn(wrap, c);
+        b.setAttribute("aria-pressed","false");
+        b.addEventListener("click", function(){
+          var on = b.getAttribute("aria-pressed") === "true";
+          b.setAttribute("aria-pressed", on ? "false" : "true");
+          if(on) data.chips = data.chips.filter(function(x){ return x !== c; });
+          else if(data.chips.indexOf(c) < 0) data.chips.push(c);
+          go.disabled = false;
+          go.textContent = data.chips.length ? "이 마음으로 시작하기" : "고르지 않고 계속";
+        });
+      });
+      var go = optBtn(wrap, "고르지 않고 계속", "go");
+      go.addEventListener("click", function(){
+        clearOpts();
+        if(data.chips.length) me(data.chips.join(" · "));
+        stepStory();
+      });
+    });
+  }
+
+  function stepStory(){
+    step = "story";
+    bot("고맙습니다. 이제 <b>어떤 상황에서 그 마음이 생겼는지</b> 두어 문장으로 적어 주세요.\n\n답을 정하고 오실 필요는 없습니다. 저희가 가장 먼저 하는 일은 답을 주는 것이 아니라, 질문을 다시 세우는 일입니다.").then(function(){
+      setInput(true, "예) 창업을 준비하는데 확신인지 도피인지 모르겠습니다");
+      var wrap = opts();
+      var skip = optBtn(wrap, "지금은 적기 어려워요", "ghost");
+      skip.addEventListener("click", function(){
+        clearOpts(); setInput(false);
+        data.message = "";
+        stepCat();
+      });
+    });
+  }
+
+  function stepCat(){
+    step = "cat";
+    clearOpts(); setInput(false);
+    bot("어떤 방식의 도움을 찾고 계신가요?").then(function(){
+      var wrap = opts();
+      CATS.forEach(function(c){
+        optBtn(wrap, c.t).addEventListener("click", function(){
+          data.category = c.v;
+          clearOpts(); me(c.t);
+          stepName();
+        });
+      });
+    });
+  }
+
+  function stepName(){
+    // 로그인 상태면 성함을 다시 묻지 않는다.
+    var known = window.SALV_USER && window.SALV_USER.name;
+    if(known){
+      data.name = String(known).slice(0, 60);
+      clearOpts(); setInput(false);
+      stepContact();
+      return;
+    }
+    step = "name";
+    bot("어떻게 불러 드리면 될까요? <b>성함</b>을 적어 주세요.").then(function(){
+      setInput(true, "성함");
+    });
+  }
+
+  function stepContact(){
+    step = "contact";
+    clearOpts(); setInput(false);
+    bot(esc(data.name) + "님, 반갑습니다.\n\n답장을 보내 드릴 <b>이메일</b>을 남겨 주세요. 연락처는 선택입니다.").then(function(){
+      var f = el("div","cform");
+      var email = el("input","cf-in"); email.type="email"; email.placeholder="name@example.com"; email.autocomplete="email";
+      if(window.SALV_USER && window.SALV_USER.email) email.value = window.SALV_USER.email;
+      var phone = el("input","cf-in"); phone.type="tel"; phone.placeholder="연락처 (선택)"; phone.autocomplete="tel";
+      var lab = el("label","cf-agree");
+      lab.innerHTML = '<input type="checkbox"><span><b>개인정보 수집·이용에 동의합니다.</b> 상담 회신을 위해 이름·연락처·문의 내용을 수집하며, 문의 종결 후 1년간 보관 뒤 파기합니다.</span>';
+      var agree = lab.querySelector("input");
+      var errp = el("p","cf-msg err","");
+      var send = el("button","cf-submit","문의 보내기"); send.type="button";
+
+      f.appendChild(email); f.appendChild(phone); f.appendChild(lab); f.appendChild(send); f.appendChild(errp);
+      body.appendChild(f); scrollEnd();
+      setTimeout(function(){ try{ email.focus({preventScroll:true}); }catch(_){} }, 80);
+
+      function submit(){
+        errp.textContent = "";
+        if(!validEmail(email.value)){ errp.textContent = "이메일 형식을 확인해 주세요."; email.focus(); return; }
+        if(!agree.checked){ errp.textContent = "개인정보 수집·이용 동의가 필요합니다."; return; }
+        data.email = email.value.trim();
+        data.phone = phone.value.trim();
+        send.disabled = true; send.textContent = "보내는 중…";
+        finish().then(function(){}, function(e){
+          send.disabled = false; send.textContent = "다시 보내기";
+          errp.textContent = failText(e);
+        });
+      }
+      send.addEventListener("click", submit);
+      email.addEventListener("keydown", function(e){ if(e.key === "Enter"){ e.preventDefault(); submit(); } });
+      phone.addEventListener("keydown", function(e){ if(e.key === "Enter"){ e.preventDefault(); submit(); } });
+    });
+  }
+
+  function finish(){
+    busy = true;
+    return post("/api/lead", {
+      source: "상담챗봇",
+      name: data.name,
+      email: data.email,
+      phone: data.phone,
+      company: data.company,
+      message: data.message,
+      category: data.category || "일반문의",
+      chips: data.chips,
+      agree: true,
+      page: location.pathname + " · 상담챗봇"
+    }).then(function(res){
+      busy = false;
+      clearOpts();
+      if(res && res.crisis){ halt(res.type, false); return; } // 서버가 이미 기록했다
+      ended = true;
+      me(data.email);
+      return bot(
+        "<b>접수되었습니다.</b>" + (res && res.no ? '\n<span class="src">문의번호 ' + esc(res.no) + "</span>" : "") +
+        "\n\n영업일 2일 이내에 " + esc(data.email) + " 으로 1차 회신을 드립니다. " +
+        "읽어 보고 저희가 도울 수 있는 질문인지부터 정직하게 말씀드리겠습니다.\n\n오늘 하루, 마음이 조금 가벼워지시기를 바랍니다.", 520
+      ).then(function(){
+        setInput(false, "상담이 접수되었습니다");
+        var wrap = opts();
+        optBtn(wrap, "처음부터 다시", "ghost").addEventListener("click", function(){ reset(); });
+      });
+    }, function(e){
+      busy = false;
+      throw e;
+    });
+  }
+
+  /* ── 입력 전송 ─────────────────────────────────────────── */
+  function handleSend(){
+    if(input.disabled || busy || ended) return;
+    var v = input.value.trim();
+    if(!v) return;
+
+    var crisis = detectCrisis(v);
+    if(crisis){ input.value = ""; autoGrow(); halt(crisis); return; }
+
+    input.value = ""; autoGrow();
+    me(v);
+
+    if(step === "story"){
+      data.message = v.slice(0, 4000);
+      clearOpts(); setInput(false);
+      stepCat();
+    } else if(step === "name"){
+      data.name = v.slice(0, 60);
+      setInput(false);
+      stepContact();
+    }
+  }
+
+  function autoGrow(){
+    input.style.height = "auto";
+    input.style.height = Math.min(input.scrollHeight, 112) + "px";
+  }
+
+  function reset(){
+    data = { chips:[], message:"", category:"", name:"", email:"", phone:"", company:"" };
+    step = "idle"; busy = false; ended = false;
+    body.innerHTML = "";
+    stepChips();
+  }
+
+  /* ── 열고 닫기 ─────────────────────────────────────────── */
+  var lastFocus = null;
+  function open(){
+    lastFocus = document.activeElement;
+    panel.hidden = false; scrim.hidden = false;
+    requestAnimationFrame(function(){
+      panel.classList.add("open"); scrim.classList.add("open");
+      fab.classList.add("hide"); fab.setAttribute("aria-expanded","true");
+    });
+    if(!started){ started = true; stepChips(); }
+    setTimeout(function(){ try{ closeBtn.focus({preventScroll:true}); }catch(_){} }, 220);
+  }
+  function close(){
+    panel.classList.remove("open"); scrim.classList.remove("open");
+    fab.classList.remove("hide"); fab.setAttribute("aria-expanded","false");
+    setTimeout(function(){ panel.hidden = true; scrim.hidden = true; }, 300);
+    if(lastFocus && lastFocus.focus) { try{ lastFocus.focus({preventScroll:true}); }catch(_){} }
+  }
+
+  fab.addEventListener("click", open);
+  closeBtn.addEventListener("click", close);
+  scrim.addEventListener("click", close);
+  document.addEventListener("keydown", function(e){
+    if(e.key === "Escape" && !panel.hidden) close();
+  });
+  sendBtn.addEventListener("click", handleSend);
+  input.addEventListener("input", autoGrow);
+  // 한글 IME는 조합을 확정하는 Enter에서 isComposing이 true다. 그대로 무시하면
+  // 사용자는 Enter를 두 번 눌러야 한다. 확정 직후 compositionend에서 대신 보낸다.
+  var pendingEnter = false;
+  input.addEventListener("compositionstart", function(){ pendingEnter = false; });
+  input.addEventListener("compositionend", function(){
+    if(pendingEnter){ pendingEnter = false; handleSend(); }
+  });
+  input.addEventListener("keydown", function(e){
+    if(e.key !== "Enter"){ pendingEnter = false; return; }
+    if(e.shiftKey) return;
+    if(e.isComposing || e.keyCode === 229){ pendingEnter = true; return; }
+    e.preventDefault();
+    handleSend();
+  });
+
+  // 상담·문의 섹션으로 스크롤될 때 FAB가 폼을 가리지 않게 잠시 숨긴다.
+  var contactSec = $("#contact");
+  if(contactSec && "IntersectionObserver" in window){
+    new IntersectionObserver(function(es){
+      es.forEach(function(en){
+        if(panel.hidden) fab.classList.toggle("hide", en.isIntersecting && en.intersectionRatio > 0.35);
+      });
+    }, {threshold:[0, 0.35, 1]}).observe(contactSec);
+  }
+}
+
+/* ============================================================
+   2) 상담·문의 폼
+   ============================================================ */
+var form = $("#cfForm");
+if(form){
+  var chipBox = $("#cfChips"), picked = [];
+  CHIPS.forEach(function(c){
+    var b = el("button","cchip",esc(c));
+    b.type = "button";
+    b.setAttribute("aria-pressed","false");
+    b.addEventListener("click", function(){
+      var on = b.getAttribute("aria-pressed") === "true";
+      b.setAttribute("aria-pressed", on ? "false" : "true");
+      if(on) picked = picked.filter(function(x){ return x !== c; });
+      else if(picked.indexOf(c) < 0) picked.push(c);
+    });
+    chipBox.appendChild(b);
+  });
+
+  var out = $("#cfMsgOut"), btn = $("#cfSubmit");
+  function tell(text, kind){
+    out.textContent = text || "";
+    out.className = "cf-msg" + (kind ? " " + kind : "");
+  }
+
+  form.addEventListener("submit", function(e){
+    e.preventDefault();
+    tell("");
+
+    var name = $("#cfName").value.trim();
+    var email = $("#cfEmail").value.trim();
+    var phone = $("#cfPhone").value.trim();
+    var company = $("#cfCompany").value.trim();
+    var message = $("#cfMsg").value.trim();
+    var category = $("#cfCat").value;
+    var agree = $("#cfAgree").checked;
+
+    if(!name){ tell("성함을 입력해 주세요.", "err"); $("#cfName").focus(); return; }
+    if(!validEmail(email)){ tell("이메일 형식을 확인해 주세요.", "err"); $("#cfEmail").focus(); return; }
+    if(message.length < 5){ tell("문의 내용을 조금만 더 적어 주세요.", "err"); $("#cfMsg").focus(); return; }
+    if(!agree){ tell("개인정보 수집·이용 동의가 필요합니다.", "err"); return; }
+
+    // 위기 신호는 접수보다 안내가 먼저다 (service-policy.md §14.2①).
+    var crisis = detectCrisis(message);
+    if(crisis){
+      reportRisk(crisis, "이메일·문의");
+      var card = crisisNode();
+      form.replaceWith(card);
+      card.scrollIntoView({behavior:"smooth", block:"center"});
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = "보내는 중…";
+    tell("");
+
+    post("/api/lead", {
+      source: "웹 문의폼",
+      name: name, email: email, phone: phone, company: company,
+      message: message, category: category, chips: picked,
+      agree: true,
+      website: $("#cfHoney").value,
+      page: location.pathname + " · 상담·문의"
+    }).then(function(res){
+      if(res && res.crisis){
+        var card = crisisNode();
+        form.replaceWith(card);
+        card.scrollIntoView({behavior:"smooth", block:"center"});
+        return;
+      }
+      var done = el("div","contact-done",
+        (res && res.no ? '<span class="no">문의번호 ' + esc(res.no) + "</span>" : "") +
+        "<h3>문의가 접수되었습니다</h3>" +
+        "<p>영업일 2일 이내에 <b>" + esc(email) + "</b> 으로 1차 회신을 드립니다.<br>" +
+        "읽어 보고 저희가 도울 수 있는 질문인지부터 정직하게 말씀드리겠습니다.</p>");
+      form.replaceWith(done);
+      done.scrollIntoView({behavior:"smooth", block:"center"});
+    })["catch"](function(err){
+      btn.disabled = false;
+      btn.textContent = "다시 보내기";
+      tell(failText(err), "err");
+    });
+  });
+}
+
+})();
+</script>
+
+
+<script>
+/* ============================================================
+   Salvation — 나의 성소 · 섹션 네비 · 계정 확장
+   ------------------------------------------------------------
+   앞 스크립트의 전역(sb, user, SAVED, user_label 등)을 읽어 쓴다.
+   Supabase 표가 아직 없어도 동작하도록 전부 로컬 우선이며,
+   클라우드 동기화는 실패하면 조용히 로컬만 쓴다.
+   ============================================================ */
+(function(){
+"use strict";
+
+var q  = function(s,r){ return (r||document).querySelector(s); };
+var qa = function(s,r){ return Array.prototype.slice.call((r||document).querySelectorAll(s)); };
+function h(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function el(t,c,html){ var n=document.createElement(t); if(c)n.className=c; if(html!=null)n.innerHTML=html; return n; }
+function uid(){
+  try{ if(crypto&&crypto.randomUUID) return crypto.randomUUID(); }catch(_){}
+  return "u"+Date.now().toString(36)+Math.random().toString(36).slice(2,9);
+}
+function todayKey(d){
+  d = d || new Date();
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+}
+function dayLabel(k){
+  var p=String(k).split("-");
+  return p.length===3 ? (Number(p[1])+"월 "+Number(p[2])+"일") : k;
+}
+function lsGet(k,d){ try{ var v=localStorage.getItem(k); return v?JSON.parse(v):d; }catch(_){ return d; } }
+function lsSet(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(_){} }
+
+/* ── 토스트 ───────────────────────────────────────────────── */
+var toastEl=null, toastT=null;
+function toast(msg){
+  if(!toastEl){ toastEl=el("div","toast"); document.body.appendChild(toastEl); }
+  toastEl.textContent=msg;
+  toastEl.classList.add("on");
+  clearTimeout(toastT);
+  toastT=setTimeout(function(){ toastEl.classList.remove("on"); },2600);
+}
+
+/* ── 현재 로그인 사용자 ───────────────────────────────────── */
+function me(){ try{ return (typeof user!=="undefined"&&user)?user:null; }catch(_){ return null; } }
+function client(){ try{ return (typeof sb!=="undefined"&&sb)?sb:null; }catch(_){ return null; } }
+function savedItems(){
+  // Map.values()는 이터레이터다. slice.call 로는 빈 배열이 나오므로 Array.from 을 쓴다.
+  try{ return (typeof SAVED!=="undefined"&&SAVED) ? Array.from(SAVED.values()) : []; }
+  catch(_){ return []; }
+}
+
+/* ── 클라우드 동기화 (표가 없으면 조용히 로컬 전용) ───────── */
+var cloudOff = {};
+function cloudReady(t){ return Boolean(me()&&client()&&!cloudOff[t]); }
+function cloudFail(t,e){
+  cloudOff[t]=true;
+  if(window.console&&console.info) console.info("[Salvation] '"+t+"' 클라우드 동기화 없음 — 이 기기에만 저장합니다.", e&&e.message);
+}
+
+/* ============================================================
+   저장소
+   ============================================================ */
+var K = {
+  notes:"salv_qt_v1", prayers:"salv_prayer_v1",
+  read:"salv_read_v1", days:"salv_days_v1", mem:"salv_mem_v1"
+};
+var NOTES   = lsGet(K.notes,[]);
+var PRAYERS = lsGet(K.prayers,[]);
+var READ    = lsGet(K.read,[]);
+var DAYS    = lsGet(K.days,[]);
+var MEMSTAT = lsGet(K.mem,{});
+
+function persist(){
+  lsSet(K.notes,NOTES); lsSet(K.prayers,PRAYERS);
+  lsSet(K.read,READ); lsSet(K.days,DAYS); lsSet(K.mem,MEMSTAT);
+}
+
+/* 행 단위 표 (qt_notes / prayers) */
+function pushRow(table, row){
+  if(!cloudReady(table)) return;
+  client().from(table).upsert(Object.assign({user_id:me().id}, row), {onConflict:"user_id,uid"})
+    .then(function(r){ if(r&&r.error) cloudFail(table,r.error); },
+          function(e){ cloudFail(table,e); });
+}
+function dropRow(table, rowUid){
+  if(!cloudReady(table)) return;
+  client().from(table).delete().eq("uid",rowUid)
+    .then(function(r){ if(r&&r.error) cloudFail(table,r.error); },
+          function(e){ cloudFail(table,e); });
+}
+
+/* 단일 상태 행 (user_state) */
+var stateT=null;
+function pushState(){
+  if(!cloudReady("user_state")) return;
+  clearTimeout(stateT);
+  stateT=setTimeout(function(){
+    client().from("user_state").upsert({
+      user_id: me().id, reading: READ, practice: DAYS, memory: MEMSTAT,
+      updated_at: new Date().toISOString()
+    }, {onConflict:"user_id"})
+      .then(function(r){ if(r&&r.error) cloudFail("user_state",r.error); },
+            function(e){ cloudFail("user_state",e); });
+  },700);
+}
+
+function mergeByUid(local, cloud){
+  var map={};
+  local.forEach(function(x){ if(x&&x.uid) map[x.uid]=x; });
+  cloud.forEach(function(x){ if(x&&x.uid) map[x.uid]=x; });
+  return Object.keys(map).map(function(k){ return map[k]; });
+}
+
+function pullAll(){
+  var u=me(), c=client();
+  if(!(u&&c)) return Promise.resolve();
+
+  var jobs=[];
+
+  jobs.push(c.from("qt_notes").select("*").then(function(r){
+    if(r.error){ cloudFail("qt_notes",r.error); return; }
+    var cloud=(r.data||[]).map(function(x){
+      return {uid:x.uid,date:x.date,ref:x.ref,verse:x.verse,saw:x.saw,felt:x.felt,act:x.act,at:x.created_at?Date.parse(x.created_at):Date.now()};
+    });
+    var before=NOTES.slice();
+    NOTES=mergeByUid(before,cloud).sort(function(a,b){ return (b.at||0)-(a.at||0); });
+    var cloudUids={}; cloud.forEach(function(x){ cloudUids[x.uid]=1; });
+    before.forEach(function(x){ if(!cloudUids[x.uid]) pushRow("qt_notes",rowOfNote(x)); });
+  }, function(e){ cloudFail("qt_notes",e); }));
+
+  jobs.push(c.from("prayers").select("*").then(function(r){
+    if(r.error){ cloudFail("prayers",r.error); return; }
+    var cloud=(r.data||[]).map(function(x){
+      return {uid:x.uid,title:x.title,cat:x.cat,started:x.started,answered:x.answered_at||null,at:x.created_at?Date.parse(x.created_at):Date.now()};
+    });
+    var before=PRAYERS.slice();
+    PRAYERS=mergeByUid(before,cloud).sort(function(a,b){ return (b.at||0)-(a.at||0); });
+    var ids={}; cloud.forEach(function(x){ ids[x.uid]=1; });
+    before.forEach(function(x){ if(!ids[x.uid]) pushRow("prayers",rowOfPrayer(x)); });
+  }, function(e){ cloudFail("prayers",e); }));
+
+  jobs.push(c.from("user_state").select("*").eq("user_id",u.id).maybeSingle().then(function(r){
+    if(r.error){ cloudFail("user_state",r.error); return; }
+    var row=r.data;
+    if(row){
+      if(Array.isArray(row.reading))  READ = Array.from(new Set(READ.concat(row.reading)));
+      if(Array.isArray(row.practice)) DAYS = Array.from(new Set(DAYS.concat(row.practice)));
+      if(row.memory&&typeof row.memory==="object"){
+        Object.keys(row.memory).forEach(function(k){
+          MEMSTAT[k]=Math.max(MEMSTAT[k]||0, row.memory[k]||0);
+        });
+      }
+    }
+    pushState();
+  }, function(e){ cloudFail("user_state",e); }));
+
+  return Promise.all(jobs.map(function(p){ return Promise.resolve(p)["catch"](function(){}); }))
+    .then(function(){ persist(); renderAll(); });
+}
+
+function rowOfNote(n){
+  return {uid:n.uid,date:n.date,ref:n.ref||null,verse:n.verse||null,saw:n.saw||null,felt:n.felt||null,act:n.act||null};
+}
+function rowOfPrayer(p){
+  return {uid:p.uid,title:p.title,cat:p.cat,started:p.started,answered_at:p.answered||null};
+}
+
+/* ============================================================
+   섹션 네비게이션 + 스크롤 스파이
+   ============================================================ */
+(function nav(){
+  var bar=q("#siteNav"); if(!bar) return;
+  var links=qa("a",bar);
+  var targets=links.map(function(a){ return q("#"+a.dataset.sec); });
+
+  links.forEach(function(a,i){
+    a.addEventListener("click",function(e){
+      var t=targets[i]; if(!t) return;
+      e.preventDefault();
+      t.scrollIntoView({behavior:"smooth",block:"start"});
+      history.replaceState(null,"","#"+a.dataset.sec);
+    });
+  });
+
+  var lastSec=null;
+  function mark(sec){
+    // 같은 섹션이면 아무것도 하지 않는다. 매 콜백마다 스무스 스크롤을 다시 걸면
+    // 네비가 계속 움직이고 페이지가 끝없이 다시 그려진다.
+    if(sec===lastSec) return;
+    lastSec=sec;
+    links.forEach(function(a){ a.setAttribute("aria-current", String(a.dataset.sec===sec)); });
+    var on=bar.querySelector('a[aria-current="true"]');
+    if(on&&bar.scrollWidth>bar.clientWidth+4){
+      var want=on.offsetLeft-(bar.clientWidth-on.offsetWidth)/2;
+      bar.scrollTo({left:Math.max(0,want),behavior:"smooth"});
+    }
+  }
+
+  if("IntersectionObserver" in window){
+    var seen={};
+    var io=new IntersectionObserver(function(entries){
+      entries.forEach(function(en){ seen[en.target.id]=en.isIntersecting?en.intersectionRatio:0; });
+      var best=null,bv=0;
+      links.forEach(function(a){
+        var v=seen[a.dataset.sec]||0;
+        if(v>bv){ bv=v; best=a.dataset.sec; }
+      });
+      if(best) mark(best);
+    },{rootMargin:"-120px 0px -55% 0px",threshold:[0,.15,.4,.8]});
+    targets.forEach(function(t){ if(t) io.observe(t); });
+  }
+})();
+
+/* ============================================================
+   연속 묵상 (streak)
+   ============================================================ */
+var WD=["일","월","화","수","목","금","토"];
+function streakCount(){
+  var set={}; DAYS.forEach(function(d){ set[d]=1; });
+  var n=0, d=new Date();
+  if(!set[todayKey(d)]) d.setDate(d.getDate()-1);   // 오늘 아직이면 어제부터 센다
+  while(set[todayKey(d)]){ n++; d.setDate(d.getDate()-1); }
+  return n;
+}
+function renderStreak(){
+  var box=q("#sncWeek"); if(!box) return;
+  var set={}; DAYS.forEach(function(d){ set[d]=1; });
+  var html="", now=new Date();
+  for(var i=6;i>=0;i--){
+    var d=new Date(now); d.setDate(now.getDate()-i);
+    var k=todayKey(d), on=!!set[k], t=(i===0);
+    html+='<div class="snc-day'+(on?" on":"")+(t?" today":"")+'">'+
+          '<div class="dot">'+(on?"✦":"")+'</div><span class="wd">'+WD[d.getDay()]+'</span></div>';
+  }
+  box.innerHTML=html;
+  var n=streakCount();
+  q("#sncStreak").innerHTML=n+"<small>일</small>";
+  var mk=q("#sncMark"), done=!!set[todayKey()];
+  mk.classList.toggle("done",done);
+  mk.textContent=done?"오늘 묵상 완료":"오늘 묵상 표시";
+  mk.disabled=done;
+  var sub=q("#sncSub");
+  if(sub){
+    sub.textContent = n>0
+      ? (n+"일째 이어지고 있습니다" + (NOTES.length?" · 묵상 "+NOTES.length+"편":""))
+      : "매일의 묵상과 기도가 이곳에 쌓입니다";
+  }
+}
+function markToday(silent){
+  var k=todayKey();
+  if(DAYS.indexOf(k)>=0){ renderStreak(); return; }
+  DAYS.push(k); persist(); pushState(); renderStreak();
+  if(!silent){
+    var n=streakCount();
+    toast(n>1 ? ("오늘의 묵상을 표시했습니다 · "+n+"일 연속") : "오늘의 묵상을 표시했습니다");
+  }
+}
+(function(){ var b=q("#sncMark"); if(b) b.addEventListener("click",function(){ markToday(); }); })();
+
+/* ============================================================
+   탭
+   ============================================================ */
+(function tabs(){
+  var ts=qa(".snc-tab"); if(!ts.length) return;
+  ts.forEach(function(t){
+    t.addEventListener("click",function(){
+      ts.forEach(function(x){
+        var on=x===t;
+        x.setAttribute("aria-selected",String(on));
+        var p=q("#pane-"+x.dataset.pane);
+        if(p) p.hidden=!on;
+      });
+      if(t.dataset.pane==="mem") memStart();
+    });
+  });
+})();
+
+/* ============================================================
+   묵상 노트
+   ============================================================ */
+function qtSources(){
+  var out=[];
+  var t=q("#today");
+  if(t){
+    var v=t.querySelector(".today-verse,.tv,p");
+    var r=t.querySelector(".today-ref,.tr,.ref");
+    var vt=v?v.textContent.trim():"", rt=r?r.textContent.trim():"";
+    if(vt) out.push({ref:rt||"오늘의 말씀",verse:vt,tag:"오늘의 말씀"});
+  }
+  savedItems().forEach(function(it){ out.push({ref:it.ref,verse:it.verse,tag:it.kind==="wisdom"?"인문학":"서재"}); });
+  if(!out.length) out.push({ref:"",verse:"",tag:""});
+  return out;
+}
+var qtSrc=[];
+function renderQtPick(){
+  var sel=q("#qtPick"); if(!sel) return;
+  qtSrc=qtSources();
+  sel.innerHTML=qtSrc.map(function(s,i){
+    var lb=s.ref?((s.tag?"["+s.tag+"] ":"")+s.ref):"말씀을 직접 적겠습니다";
+    return '<option value="'+i+'">'+h(lb)+"</option>";
+  }).join("")+'<option value="-1">말씀 없이 기록하겠습니다</option>';
+  sel.onchange=paintQtVerse;
+  paintQtVerse();
+}
+function paintQtVerse(){
+  var sel=q("#qtPick"), box=q("#qtVerse");
+  if(!sel||!box) return;
+  var i=Number(sel.value);
+  var s=(i>=0&&qtSrc[i])?qtSrc[i]:null;
+  if(!s||!s.verse){ box.hidden=true; return; }
+  box.hidden=false;
+  q("#qtVerseText").textContent=s.verse;
+  q("#qtVerseRef").textContent=s.ref;
+}
+function renderQtList(){
+  var box=q("#qtList"); if(!box) return;
+  if(!NOTES.length){
+    box.innerHTML='<div class="snc-empty">아직 남긴 묵상이 없습니다.<br>오늘 한 줄부터 시작해 보세요.</div>';
+    return;
+  }
+  var items=NOTES.slice().sort(function(a,b){ return (b.at||0)-(a.at||0); }).slice(0,12);
+  box.innerHTML=items.map(function(n){
+    var body=[n.saw,n.felt,n.act].filter(Boolean).join("\n");
+    return '<article class="qt-item">'+
+      '<span class="dt">'+h(dayLabel(n.date))+"</span>"+
+      (n.ref?'<p class="rf">'+h(n.ref)+"</p>":"")+
+      (body?'<p class="bd">'+h(body)+"</p>":"")+
+      '<button class="qt-x" type="button" aria-label="이 묵상 지우기" data-uid="'+h(n.uid)+'">✕</button>'+
+      "</article>";
+  }).join("");
+  qa(".qt-x",box).forEach(function(b){
+    b.addEventListener("click",function(){
+      var u=b.dataset.uid;
+      NOTES=NOTES.filter(function(x){ return x.uid!==u; });
+      persist(); dropRow("qt_notes",u); renderQtList(); renderStreak();
+      toast("묵상을 지웠습니다");
+    });
+  });
+}
+(function qtBind(){
+  var save=q("#qtSave"); if(!save) return;
+  function msg(t,cls){ var m=q("#qtMsg"); if(!m)return; m.textContent=t||""; m.className="snc-msg"+(cls?" "+cls:""); }
+  save.addEventListener("click",function(){
+    var saw=q("#qtSaw").value.trim(), felt=q("#qtFelt").value.trim(), act=q("#qtDo").value.trim();
+    if(!(saw||felt||act)){ msg("세 칸 중 한 곳이라도 적어 주세요.","err"); return; }
+    var i=Number(q("#qtPick").value), s=(i>=0&&qtSrc[i])?qtSrc[i]:null;
+    var n={uid:uid(),date:todayKey(),ref:s?s.ref:"",verse:s?s.verse:"",saw:saw,felt:felt,act:act,at:Date.now()};
+    NOTES.unshift(n); persist(); pushRow("qt_notes",rowOfNote(n));
+    q("#qtSaw").value=""; q("#qtFelt").value=""; q("#qtDo").value="";
+    msg("");
+    renderQtList(); markToday(true); renderStreak();
+    toast("오늘의 묵상이 성소에 남았습니다");
+  });
+  q("#qtClear").addEventListener("click",function(){
+    q("#qtSaw").value=""; q("#qtFelt").value=""; q("#qtDo").value=""; msg("");
+  });
+})();
+
+/* ============================================================
+   기도 제목
+   ============================================================ */
+var PR_CATS=["감사","간구","중보","회개"];
+var prCat="간구";
+function renderPrCats(){
+  var box=q("#prCats"); if(!box) return;
+  box.innerHTML="";
+  PR_CATS.forEach(function(c){
+    var b=el("button","pr-cat",h(c));
+    b.type="button";
+    b.setAttribute("aria-pressed",String(c===prCat));
+    b.addEventListener("click",function(){
+      prCat=c;
+      qa(".pr-cat",box).forEach(function(x){ x.setAttribute("aria-pressed",String(x.textContent===c)); });
+    });
+    box.appendChild(b);
+  });
+}
+function prCard(p){
+  var days=Math.max(0,Math.round((Date.now()-Date.parse(p.started+"T00:00:00"))/86400000));
+  var meta=p.answered
+    ? ("응답 " + dayLabel(p.answered) + " · " + Math.max(1,Math.round((Date.parse(p.answered+"T00:00:00")-Date.parse(p.started+"T00:00:00"))/86400000+1)) + "일 만에")
+    : (dayLabel(p.started) + "부터 · " + (days===0?"오늘":days+"일째"));
+  var art=el("article","pr-item"+(p.answered?" answered":""),
+    '<span class="tag">'+h(p.answered?"응답":p.cat)+"</span>"+
+    '<div class="bd"><div class="ti">'+h(p.title)+'</div><span class="mt">'+h(meta)+"</span></div>"+
+    '<div class="pr-acts">'+
+      (p.answered?'':'<button class="pr-b amen" type="button" data-a="amen">응답되었습니다</button>')+
+      '<button class="pr-b del" type="button" data-a="del" aria-label="지우기">✕</button>'+
+    "</div>");
+  qa("button",art).forEach(function(b){
+    b.addEventListener("click",function(){
+      if(b.dataset.a==="amen"){
+        p.answered=todayKey(); persist(); pushRow("prayers",rowOfPrayer(p)); renderPrayers();
+        toast("응답의 기록이 남았습니다");
+      }else{
+        PRAYERS=PRAYERS.filter(function(x){ return x.uid!==p.uid; });
+        persist(); dropRow("prayers",p.uid); renderPrayers();
+      }
+    });
+  });
+  return art;
+}
+function renderPrayers(){
+  var list=q("#prList"), ansWrap=q("#prAnsWrap"), ans=q("#prAns");
+  if(!list) return;
+  var open=PRAYERS.filter(function(p){ return !p.answered; }).sort(function(a,b){ return (b.at||0)-(a.at||0); });
+  var done=PRAYERS.filter(function(p){ return p.answered; }).sort(function(a,b){ return String(b.answered).localeCompare(String(a.answered)); });
+
+  list.innerHTML="";
+  if(!open.length) list.innerHTML='<div class="snc-empty">아직 기도 제목이 없습니다.<br>지금 마음에 있는 한 가지를 적어 보세요.</div>';
+  else open.forEach(function(p){ list.appendChild(prCard(p)); });
+
+  ans.innerHTML="";
+  ansWrap.hidden=!done.length;
+  done.slice(0,20).forEach(function(p){ ans.appendChild(prCard(p)); });
+
+  var c=q("#sncPrCnt");
+  if(c) c.textContent=open.length?String(open.length):"";
+}
+(function prBind(){
+  var add=q("#prAdd"); if(!add) return;
+  function msg(t,cls){ var m=q("#prMsg"); if(!m)return; m.textContent=t||""; m.className="snc-msg"+(cls?" "+cls:""); }
+  function go(){
+    var ti=q("#prTitle").value.trim();
+    if(ti.length<2){ msg("기도 제목을 적어 주세요.","err"); return; }
+    var p={uid:uid(),title:ti.slice(0,120),cat:prCat,started:todayKey(),answered:null,at:Date.now()};
+    PRAYERS.unshift(p); persist(); pushRow("prayers",rowOfPrayer(p));
+    q("#prTitle").value=""; msg(""); renderPrayers();
+    toast("기도 제목을 더했습니다");
+  }
+  add.addEventListener("click",go);
+  q("#prTitle").addEventListener("keydown",function(e){
+    if(e.key==="Enter"&&!e.isComposing&&e.keyCode!==229){ e.preventDefault(); go(); }
+  });
+})();
+
+/* ============================================================
+   말씀 암송
+   ============================================================ */
+var memState=null;
+function memList(){
+  return savedItems().filter(function(it){
+    return it.verse && it.verse.split(/\s+/).length>=4;
+  }).slice(0,40);
+}
+function renderMemPick(){
+  var sel=q("#memPick"); if(!sel) return;
+  var list=memList();
+  if(!list.length){ sel.innerHTML='<option value="-1">간직한 말씀이 없습니다</option>'; return; }
+  sel.innerHTML=list.map(function(it,i){
+    var n=MEMSTAT[it.ref]||0;
+    return '<option value="'+i+'">'+h(it.ref)+(n?" · "+n+"회":"")+"</option>";
+  }).join("");
+}
+function memStart(){
+  var card=q("#memCard"); if(!card) return;
+  var list=memList();
+  if(!list.length){
+    card.innerHTML='<div class="snc-empty">암송할 말씀이 아직 없습니다.<br>말씀 서재에서 ♡를 눌러 구절을 간직해 주세요.</div>';
+    q("#memMsg").textContent=""; return;
+  }
+  renderMemPickKeepSelection();
+  var sel=q("#memPick");
+  var it=list[Math.max(0,Math.min(list.length-1,Number(sel.value)||0))];
+  var ratio=parseFloat(q("#memLevel").value)||0.45;
+
+  var words=it.verse.split(/\s+/).filter(Boolean);
+  var n=Math.max(1,Math.min(words.length-1,Math.round(words.length*ratio)));
+  var idx=[];
+  while(idx.length<n){
+    var r=Math.floor(Math.random()*words.length);
+    if(idx.indexOf(r)<0) idx.push(r);
+  }
+  idx.sort(function(a,b){ return a-b; });
+
+  memState={ item:it, words:words, blanks:idx, filled:0 };
+
+  card.innerHTML='<p class="mem-text" id="memText"></p><p class="mem-ref">'+h(it.ref)+'</p>'+
+    '<div class="mem-bar" id="memBar"></div>'+
+    '<div class="mem-meta"><span>가려진 낱말 <b>'+n+'</b>개</span><span>이 구절 암송 <b>'+(MEMSTAT[it.ref]||0)+'</b>회</span></div>';
+  paintMem();
+  paintMemOptions();
+  q("#memMsg").textContent="";
+}
+function renderMemPickKeepSelection(){
+  var sel=q("#memPick");
+  var cur=sel.value;
+  renderMemPick();
+  if(cur!==null&&sel.querySelector('option[value="'+cur+'"]')) sel.value=cur;
+}
+function paintMem(){
+  var t=q("#memText"); if(!t||!memState) return;
+  var bi=0;
+  t.innerHTML=memState.words.map(function(w,i){
+    if(memState.blanks.indexOf(i)>=0){
+      var order=memState.blanks.indexOf(i);
+      var done=order<memState.filled;
+      var now=order===memState.filled;
+      bi++;
+      return '<span class="mem-blank'+(done?" ok":"")+(now?" now":"")+'">'+h(w)+"</span>";
+    }
+    return '<span class="mem-w">'+h(w)+"</span>";
+  }).join(" ");
+}
+function paintMemOptions(){
+  var bar=q("#memBar"); if(!bar||!memState) return;
+  bar.innerHTML="";
+  if(memState.filled>=memState.blanks.length){
+    var ref=memState.item.ref;
+    MEMSTAT[ref]=(MEMSTAT[ref]||0)+1; persist(); pushState();
+    bar.innerHTML='<p class="mem-done">끝까지 채우셨습니다. 이 구절을 '+(MEMSTAT[ref])+'번째 암송했습니다.</p>';
+    var again=el("button","mem-opt","다시 연습하기"); again.type="button";
+    again.addEventListener("click",memStart);
+    bar.appendChild(again);
+    markToday(true); renderStreak();
+    toast("암송을 마쳤습니다");
+    return;
+  }
+  var remain=memState.blanks.slice(memState.filled).map(function(i){ return memState.words[i]; });
+  var pool=remain.slice(0,5);
+  pool=pool.sort(function(){ return Math.random()-0.5; });
+  var answer=memState.words[memState.blanks[memState.filled]];
+  if(pool.indexOf(answer)<0) pool[0]=answer;
+  pool.forEach(function(w){
+    var b=el("button","mem-opt",h(w)); b.type="button";
+    b.addEventListener("click",function(){
+      if(w===answer){
+        memState.filled++;
+        paintMem(); paintMemOptions();
+        q("#memMsg").textContent="";
+      }else{
+        q("#memMsg").textContent="조금 더 생각해 보세요.";
+        q("#memMsg").className="snc-msg err";
+        b.disabled=true;
+      }
+    });
+    bar.appendChild(b);
+  });
+}
+(function memBind(){
+  var p=q("#memPick"), l=q("#memLevel");
+  if(p) p.addEventListener("change",memStart);
+  if(l) l.addEventListener("change",memStart);
+})();
+
+/* ============================================================
+   통독 진도
+   ============================================================ */
+var BOOKS_OLD=[
+  ["창","창세기"],["출","출애굽기"],["레","레위기"],["민","민수기"],["신","신명기"],
+  ["수","여호수아"],["삿","사사기"],["룻","룻기"],["삼상","사무엘상"],["삼하","사무엘하"],
+  ["왕상","열왕기상"],["왕하","열왕기하"],["대상","역대상"],["대하","역대하"],["스","에스라"],
+  ["느","느헤미야"],["에","에스더"],["욥","욥기"],["시","시편"],["잠","잠언"],
+  ["전","전도서"],["아","아가"],["사","이사야"],["렘","예레미야"],["애","예레미야애가"],
+  ["겔","에스겔"],["단","다니엘"],["호","호세아"],["욜","요엘"],["암","아모스"],
+  ["옵","오바댜"],["욘","요나"],["미","미가"],["나","나훔"],["합","하박국"],
+  ["습","스바냐"],["학","학개"],["슥","스가랴"],["말","말라기"]
+];
+var BOOKS_NEW=[
+  ["마","마태복음"],["막","마가복음"],["눅","누가복음"],["요","요한복음"],["행","사도행전"],
+  ["롬","로마서"],["고전","고린도전서"],["고후","고린도후서"],["갈","갈라디아서"],["엡","에베소서"],
+  ["빌","빌립보서"],["골","골로새서"],["살전","데살로니가전서"],["살후","데살로니가후서"],["딤전","디모데전서"],
+  ["딤후","디모데후서"],["딛","디도서"],["몬","빌레몬서"],["히","히브리서"],["약","야고보서"],
+  ["벧전","베드로전서"],["벧후","베드로후서"],["요일","요한1서"],["요이","요한2서"],["요삼","요한3서"],
+  ["유","유다서"],["계","요한계시록"]
+];
+function renderReading(){
+  var o=q("#rdOld"), n=q("#rdNew");
+  if(!o||!n) return;
+  var set={}; READ.forEach(function(b){ set[b]=1; });
+
+  function grid(host,list){
+    host.innerHTML="";
+    list.forEach(function(pair){
+      var b=el("button","rd-b",h(pair[0]));
+      b.type="button";
+      b.title=pair[1];
+      b.setAttribute("aria-label",pair[1]);
+      b.setAttribute("aria-pressed",String(!!set[pair[1]]));
+      b.addEventListener("click",function(){
+        var on=b.getAttribute("aria-pressed")==="true";
+        if(on) READ=READ.filter(function(x){ return x!==pair[1]; });
+        else READ.push(pair[1]);
+        persist(); pushState(); renderReading();
+        if(!on) toast(pair[1]+" 통독 표시");
+      });
+      host.appendChild(b);
+    });
+  }
+  grid(o,BOOKS_OLD); grid(n,BOOKS_NEW);
+
+  var done=READ.length, pct=Math.round(done/66*100);
+  q("#rdPct").innerHTML=pct+'%<small>'+done+" / 66권</small>";
+  q("#rdFill").style.width=pct+"%";
+  var c=q("#sncRdCnt");
+  if(c) c.textContent=done?String(done):"";
+}
+(function rdBind(){
+  var r=q("#rdReset"); if(!r) return;
+  r.addEventListener("click",function(){
+    if(!READ.length) return;
+    if(!confirm("통독 진도를 모두 지울까요?")) return;
+    READ=[]; persist(); pushState(); renderReading();
+    toast("통독 진도를 초기화했습니다");
+  });
+})();
+
+/* ============================================================
+   계정 확장 — 매직링크 · 비밀번호 재설정 · 이름 · 내보내기
+   ============================================================ */
+function authMsg(t,cls){
+  try{ authMsgSet(t,cls||""); }catch(_){}
+}
+function redirectUrl(){ return location.origin+location.pathname; }
+
+(function authExtra(){
+  var magic=q("#authMagic"), forgot=q("#authForgot");
+
+  if(magic) magic.addEventListener("click",function(){
+    var c=client(); if(!c){ authMsg("배포된 주소에서 이용해 주세요.","err"); return; }
+    var email=q("#authEmail").value.trim();
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)){ authMsg("이메일을 먼저 입력해 주세요.","err"); q("#authEmail").focus(); return; }
+    magic.disabled=true; authMsg("메일을 보내는 중…","");
+    c.auth.signInWithOtp({email:email,options:{emailRedirectTo:redirectUrl()}})
+      .then(function(r){
+        magic.disabled=false;
+        if(r.error) authMsg(r.error.message||"메일 발송에 실패했습니다.","err");
+        else authMsg("로그인 링크를 보냈습니다. 메일함을 확인해 주세요.","ok");
+      },function(){ magic.disabled=false; authMsg("메일 발송에 실패했습니다.","err"); });
+  });
+
+  if(forgot) forgot.addEventListener("click",function(){
+    var c=client(); if(!c){ authMsg("배포된 주소에서 이용해 주세요.","err"); return; }
+    var email=q("#authEmail").value.trim();
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)){ authMsg("이메일을 먼저 입력해 주세요.","err"); q("#authEmail").focus(); return; }
+    authMsg("메일을 보내는 중…","");
+    c.auth.resetPasswordForEmail(email,{redirectTo:redirectUrl()})
+      .then(function(r){
+        if(r.error) authMsg(r.error.message||"메일 발송에 실패했습니다.","err");
+        else authMsg("비밀번호 재설정 메일을 보냈습니다.","ok");
+      },function(){ authMsg("메일 발송에 실패했습니다.","err"); });
+  });
+
+  /* 재설정 링크로 돌아온 경우 */
+  var rs=q("#authReset"), rsIn=q("#authNewPw"), rsGo=q("#authResetGo");
+  function openReset(){
+    var m=q("#authModal"); if(!m) return;
+    q("#authLogin").hidden=true; q("#authAccount").hidden=true; rs.hidden=false;
+    m.hidden=false; requestAnimationFrame(function(){ m.classList.add("open"); });
+    setTimeout(function(){ try{ rsIn.focus(); }catch(_){} },160);
+  }
+  if(rsGo) rsGo.addEventListener("click",function(){
+    var c=client(); if(!c) return;
+    var pw=rsIn.value;
+    if(pw.length<6){ q("#authResetMsg").textContent="6자 이상 입력해 주세요."; return; }
+    rsGo.disabled=true; q("#authResetMsg").textContent="변경 중…";
+    c.auth.updateUser({password:pw}).then(function(r){
+      rsGo.disabled=false;
+      if(r.error){ q("#authResetMsg").textContent=r.error.message||"변경에 실패했습니다."; return; }
+      rs.hidden=true; q("#authLogin").hidden=false;
+      toast("비밀번호를 변경했습니다");
+      try{ closeAuth(); }catch(_){}
+    },function(){ rsGo.disabled=false; q("#authResetMsg").textContent="변경에 실패했습니다."; });
+  });
+
+  var c0=client();
+  if(c0){
+    try{
+      c0.auth.onAuthStateChange(function(ev){
+        if(ev==="PASSWORD_RECOVERY"){ openReset(); return; }
+        if(ev==="SIGNED_IN"||ev==="INITIAL_SESSION"||ev==="TOKEN_REFRESHED"){
+          cloudOff={};
+          setTimeout(function(){ pullAll(); paintAccount(); syncIdentity(); },120);
+        }
+        if(ev==="SIGNED_OUT"){ paintAccount(); syncIdentity(); }
+      });
+    }catch(_){}
+  }
+})();
+
+/* 계정 패널 — 통계 · 이름 · 내보내기 */
+function paintAccount(){
+  var u=me();
+  var st=q("#acctStats");
+  if(st){
+    st.innerHTML=
+      '<div class="acct-st"><b>'+savedItems().length+"</b><span>간직한 말씀</span></div>"+
+      '<div class="acct-st"><b>'+NOTES.length+"</b><span>묵상 기록</span></div>"+
+      '<div class="acct-st"><b>'+streakCount()+"</b><span>연속 묵상</span></div>";
+  }
+  var ni=q("#acctNameIn");
+  if(ni&&u){
+    var m=u.user_metadata||{};
+    ni.value=m.name||m.full_name||"";
+  }
+  var sync=q("#acctSync");
+  if(sync){
+    var off=Object.keys(cloudOff).length;
+    sync.innerHTML = off
+      ? "묵상·기도 기록은 <b>이 기기에만</b> 저장되고 있습니다. 다른 기기와 함께 보시려면 <b>supabase.sql</b> 의 표를 만들어 주세요."
+      : "간직한 말씀과 묵상·기도 기록이 <b>계정에 동기화</b>됩니다.";
+  }
+}
+(function acctBind(){
+  var save=q("#acctNameGo");
+  if(save) save.addEventListener("click",function(){
+    var c=client(), u=me(); if(!(c&&u)) return;
+    var nm=q("#acctNameIn").value.trim().slice(0,40);
+    if(!nm) return;
+    save.disabled=true;
+    c.auth.updateUser({data:{name:nm}}).then(function(r){
+      save.disabled=false;
+      if(r.error){ toast("이름을 바꾸지 못했습니다"); return; }
+      try{ if(r.data&&r.data.user) user=r.data.user; paintAcct(); }catch(_){}
+      toast("이름을 바꿨습니다");
+    },function(){ save.disabled=false; toast("이름을 바꾸지 못했습니다"); });
+  });
+
+  var ex=q("#acctExport");
+  if(ex) ex.addEventListener("click",function(){
+    var payload={
+      exported_at:new Date().toISOString(),
+      account:(me()&&me().email)||null,
+      saved_verses:savedItems(),
+      qt_notes:NOTES, prayers:PRAYERS,
+      reading:READ, practice_days:DAYS, memory:MEMSTAT
+    };
+    try{
+      var blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
+      var a=document.createElement("a");
+      a.href=URL.createObjectURL(blob);
+      a.download="salvation-"+todayKey()+".json";
+      document.body.appendChild(a); a.click();
+      setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },800);
+      toast("내 기록을 내려받았습니다");
+    }catch(_){ toast("내려받기에 실패했습니다"); }
+  });
+
+  var go=q("#acctSanctum");
+  if(go) go.addEventListener("click",function(){
+    try{ closeAuth(); }catch(_){}
+    var t=q("#sanctum"); if(t) setTimeout(function(){ t.scrollIntoView({behavior:"smooth",block:"start"}); },260);
+  });
+})();
+
+/* 로그인 사용자 정보를 상담 폼·챗봇에 넘긴다 */
+function syncIdentity(){
+  var u=me();
+  if(u){
+    var m=u.user_metadata||{};
+    window.SALV_USER={ name:(m.name||m.full_name||"").slice(0,40), email:u.email||"" };
+  }else{
+    window.SALV_USER=null;
+  }
+  var n=q("#cfName"), e=q("#cfEmail");
+  if(window.SALV_USER){
+    if(n&&!n.value) n.value=window.SALV_USER.name;
+    if(e&&!e.value) e.value=window.SALV_USER.email;
+  }
+}
+
+/* ============================================================
+   초기 렌더
+   ============================================================ */
+function renderAll(){
+  renderStreak(); renderQtPick(); renderQtList();
+  renderPrCats(); renderPrayers(); renderMemPick(); renderReading();
+  paintAccount(); syncIdentity();
+}
+renderAll();
+
+/* 서재가 바뀌면 묵상 선택지·암송 목록도 따라간다 */
+(function watchLibrary(){
+  var host=q("#savedList"); if(!host||!("MutationObserver" in window)) return;
+  var t=null;
+  new MutationObserver(function(){
+    clearTimeout(t);
+    t=setTimeout(function(){ renderQtPick(); renderMemPick(); paintAccount(); },250);
+  }).observe(host,{childList:true,subtree:true});
+})();
+
+/* 이미 로그인된 세션이면 곧바로 당겨온다 */
+setTimeout(function(){ if(me()) pullAll(); },900);
+
+})();
 </script>
 
 <script>

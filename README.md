@@ -6,6 +6,14 @@
 
 정적 사이트(단일 index.html + PWA). 서버·빌드 불필요.
 
+상담 챗봇 · 상담·문의 폼은 Vercel 서버리스 함수(`api/`)를 통해
+Airtable `고객관리` 베이스와 텔레그램에 연동됩니다.
+토큰 발급과 환경변수 설정은 **[CRM-SETUP.md](CRM-SETUP.md)** 를 보세요.
+
+로그인(Supabase)과 **나의 성소**(묵상 노트 · 기도 제목 · 말씀 암송 · 통독 진도 · 연속 묵상)는
+표가 없어도 이 기기에 저장되어 그대로 동작합니다.
+기기 간 동기화를 켜려면 **[supabase.sql](supabase.sql)** 을 Supabase SQL Editor에 붙여넣고 한 번 실행하세요.
+
 ---
 
 ## GitHub에 올리고 Vercel로 배포하기
