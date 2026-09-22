@@ -1,7 +1,16 @@
 # 배포본에는 문서·설정 예시를 올리지 않는다. 저장소에는 그대로 남는다.
 *.md
 supabase.sql
+
+# 비밀값·로컬 설정은 절대 업로드하지 않는다.
+# .vercelignore 가 있으면 .gitignore 는 무시되므로 여기에 다시 적는다.
+.env
+.env.local
+.env*.local
 .env.example
+.vercel/
+.git/
+
 .nojekyll
 _git_trash/
 _tmp_x/

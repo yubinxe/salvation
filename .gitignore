@@ -7,3 +7,6 @@ _tmp*/
 .env.local
 .env*.local
 .vercel/
+
+.vercel
+.env*
