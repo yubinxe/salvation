@@ -3,3 +3,7 @@ node_modules/
 _git_trash/
 _tmp_x/
 _tmp*/
+.env
+.env.local
+.env*.local
+.vercel/

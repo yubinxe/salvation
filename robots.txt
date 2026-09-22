@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+# 접수·위기기록 엔드포인트는 색인 대상이 아니다.
+Disallow: /api/
