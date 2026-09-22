@@ -35,6 +35,38 @@
 <meta name="twitter:image" content="./og.jpg">
 <meta name="robots" content="index,follow,max-image-preview:large">
 <link rel="canonical" href="./">
+<meta name="salv-build" content="20260922-1645">
+<script>
+/* 배포한 새 화면이 예전 캐시에 막히는 일을 없앤다.
+   문서에 박힌 빌드 번호와 네트워크의 version.json 을 비교해
+   다르면 서비스워커와 캐시를 지우고 딱 한 번 새로고침한다. */
+(function(){
+  var meta = document.querySelector('meta[name="salv-build"]');
+  if(!meta) return;
+  var here = meta.content;
+  fetch("version.json", { cache: "no-store" })
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(j){
+      if(!j || !j.build || j.build === here) return;
+      try{
+        if(sessionStorage.getItem("salv_bust") === j.build) return; // 무한 새로고침 방지
+        sessionStorage.setItem("salv_bust", j.build);
+      }catch(_){ return; }
+      var jobs = [];
+      if("serviceWorker" in navigator){
+        jobs.push(navigator.serviceWorker.getRegistrations().then(function(rs){
+          return Promise.all(rs.map(function(r){ return r.unregister(); }));
+        }));
+      }
+      if(window.caches){
+        jobs.push(caches.keys().then(function(ks){
+          return Promise.all(ks.map(function(k){ return caches.delete(k); }));
+        }));
+      }
+      Promise.all(jobs)["catch"](function(){}).then(function(){ location.reload(); });
+    })["catch"](function(){});
+})();
+</script>
 <title>Salvation</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -757,6 +789,47 @@ footer .fnote{font-size:11.5px;line-height:1.66;color:var(--ink-3);font-weight:5
 
 /* ── 성소 연속 묵상 ── */
 .snc-flame .mascot{width:46px;height:46px}
+
+/* ============ PC 레이아웃 (넓은 화면에서 입력창이 늘어지지 않게) ============ */
+@media (min-width:1000px){
+  /* 묵상 노트 — 왼쪽 쓰기, 오른쪽 지나온 기록 */
+  #pane-qt{display:grid;grid-template-columns:minmax(0,1.04fr) minmax(0,.96fr);column-gap:32px;align-items:start;padding:24px 26px}
+  #pane-qt > .snc-hint{grid-column:1 / -1;margin-bottom:18px}
+  #pane-qt > .qt-verse,
+  #pane-qt > .snc-row,
+  #pane-qt > .qt-grid{grid-column:1}
+  #pane-qt > .qt-list{grid-column:2;grid-row:2 / span 4;margin-top:0;align-self:start}
+
+  /* 기도 제목 — 왼쪽 적기, 오른쪽 목록 */
+  #pane-pr{display:grid;grid-template-columns:minmax(0,.82fr) minmax(0,1.18fr);column-gap:32px;align-items:start;padding:24px 26px}
+  #pane-pr > .snc-hint{grid-column:1 / -1;margin-bottom:18px}
+  #pane-pr > .pr-add{grid-column:1;grid-row:2 / span 2;margin-bottom:0}
+  #pane-pr > .pr-list{grid-column:2;grid-row:2}
+  #pane-pr > #prAnsWrap{grid-column:2;grid-row:3}
+  #pane-pr > #prAnsWrap .pr-sep{margin-top:16px}
+
+  /* 암송 · 통독 — 가운데로 모아 시선을 붙든다 */
+  #pane-mem{padding:26px}
+  #pane-mem > .snc-hint,
+  #pane-mem > .snc-row,
+  #pane-mem > .mem-card,
+  #pane-mem > .snc-msg{max-width:780px;margin-left:auto;margin-right:auto}
+  #pane-mem > .snc-hint{text-align:center}
+  .mem-text{font-size:17px}
+  #pane-rd{padding:26px}
+  .rd-grid{grid-template-columns:repeat(auto-fill,minmax(74px,1fr));gap:6px}
+
+  /* 상담·문의 — 읽고 쓰기 좋은 폭으로 가운데 정렬 */
+  .contact-card{max-width:860px;margin-left:auto;margin-right:auto;padding:32px 34px 30px}
+  .cf-ta{min-height:150px}
+
+  /* 성소 머리띠 */
+  .snc-streak{padding:20px 26px}
+}
+@media (min-width:1280px){
+  #pane-qt{grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:38px}
+  #pane-pr{column-gap:38px}
+}
 
 </style>
 </head>
