@@ -35,7 +35,7 @@
 <meta name="twitter:image" content="./og.jpg">
 <meta name="robots" content="index,follow,max-image-preview:large">
 <link rel="canonical" href="./">
-<meta name="salv-build" content="20260922-1754">
+<meta name="salv-build" content="20260923-0957">
 <script>
 /* 배포한 새 화면이 예전 캐시에 막히는 일을 없앤다.
    문서에 박힌 빌드 번호와 네트워크의 version.json 을 비교해
@@ -1026,6 +1026,119 @@ footer .fnote{line-height:1.9}
 .cf-fine{font-size:13.5px}
 .chat-note{font-size:13px;line-height:1.75}
 footer .fnote{font-size:13.5px}
+/* ============================================================
+   랜딩 — 배경 사진 · 스크롤 흐름 · 점진적 공개
+   ============================================================ */
+
+/* ── 히어로 : 사진이 뒤에서 비친다 ────────────────────────── */
+.hero{background:var(--hero-2)}
+.hero-bg{
+  position:absolute; inset:-12% 0 -6%; z-index:-3;
+  background-image:url("./bg-640.jpg");
+  background-size:cover; background-position:center 42%;
+  background-repeat:no-repeat;
+  transform:translate3d(0,0,0); will-change:transform;
+}
+@media (min-width:700px){ .hero-bg{background-image:url("./bg-1080.jpg")} }
+
+/* 사진 위의 포도주빛 장막 — 위는 비치고 아래로 갈수록 잠긴다.
+   다음 섹션으로 이어지는 경계가 보이지 않게 하려는 것이다. */
+.hero-tint{
+  position:absolute; inset:0; z-index:-2; pointer-events:none;
+  background:
+    radial-gradient(110% 80% at 50% 8%, color-mix(in srgb,var(--hero-1) 52%,transparent), transparent 70%),
+    linear-gradient(180deg,
+      color-mix(in srgb,var(--hero-2) 62%,transparent) 0%,
+      color-mix(in srgb,var(--hero-2) 80%,transparent) 42%,
+      color-mix(in srgb,var(--hero-2) 95%,transparent) 78%,
+      var(--hero-2) 100%);
+}
+.hero-in{position:relative;z-index:1}
+
+@media (min-width:900px){
+  .hero-in{min-height:min(86vh,820px);padding:88px 22px 104px}
+}
+@media (max-width:899px){
+  .hero-in{padding:58px 22px 84px}
+}
+
+/* ── 아래로 내려가라는 신호 ──────────────────────────────── */
+.scroll-cue{
+  position:absolute; left:50%; bottom:26px; z-index:2;
+  transform:translateX(-50%);
+  display:flex; flex-direction:column; align-items:center; gap:9px;
+  font-family:var(--fu); font-size:12px; font-weight:600;
+  letter-spacing:.2em; color:var(--on-wine-2);
+  text-transform:uppercase; pointer-events:none;
+  opacity:.85; transition:opacity .5s ease;
+}
+.scroll-cue.gone{opacity:0}
+.scroll-cue i{
+  display:block; width:1px; height:34px;
+  background:linear-gradient(180deg,transparent,var(--gold-2));
+  animation:cueFall 2.4s cubic-bezier(.4,0,.2,1) infinite;
+}
+@keyframes cueFall{
+  0%{transform:scaleY(.2);transform-origin:50% 0;opacity:0}
+  35%{transform:scaleY(1);transform-origin:50% 0;opacity:1}
+  70%{transform:scaleY(1);transform-origin:50% 100%;opacity:1}
+  100%{transform:scaleY(.2);transform-origin:50% 100%;opacity:0}
+}
+/* 히어로가 화면보다 커지는 좁은 폭에서는 신호가 화면 밖으로 밀린다.
+   이미 아래에 내용이 이어져 보이므로 신호 자체가 필요 없다. */
+@media (max-width:899px){.scroll-cue{display:none}}
+
+/* ── 스크롤에 따라 떠오르기 ──────────────────────────────── */
+/* 애플의 감속 곡선. 빠르게 시작해 아주 천천히 멈춘다. */
+/* 숨김은 js-reveal 이 붙었을 때만. 스크립트가 못 돌면 내용은 그냥 보인다.
+   랜딩이 통째로 빈 화면이 되는 것보다 애니메이션을 잃는 편이 낫다. */
+html.js-reveal [data-reveal]{
+  opacity:0;
+  transform:translateY(26px);
+  transition:opacity .95s cubic-bezier(.16,1,.3,1), transform 1.05s cubic-bezier(.16,1,.3,1);
+  transition-delay:var(--d,0ms);
+}
+html.js-reveal [data-reveal].in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){
+  html.js-reveal [data-reveal]{opacity:1;transform:none;transition:none}
+  .scroll-cue i{animation:none}
+  .hero-bg{transform:none !important}
+}
+
+/* ── 말씀 서재 : 단(column) 대신 격자 ────────────────────── */
+/* 단 배치는 카드가 단 경계에서 잘려 보이고 읽는 순서도 뒤엉킨다. */
+@media (min-width:900px){
+  .entries,#philList{
+    display:grid !important;
+    column-count:auto !important;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:18px;
+    align-items:start;
+  }
+  .entry{margin-bottom:0 !important}
+}
+@media (min-width:1300px){
+  .entries,#philList{grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+}
+
+/* ── 더 보기 ─────────────────────────────────────────────── */
+.more-wrap{display:flex;justify-content:center;margin-top:26px}
+.more-btn{
+  appearance:none; cursor:pointer;
+  border:1px solid var(--line-2); background:var(--surface);
+  color:var(--ink-2); font-family:var(--fu);
+  font-size:15px; font-weight:600; letter-spacing:-.01em;
+  padding:15px 30px; border-radius:999px;
+  transition:border-color .2s, color .2s, transform .2s cubic-bezier(.16,1,.3,1), box-shadow .2s;
+}
+.more-btn:hover{border-color:var(--gold);color:var(--wine);transform:translateY(-2px);box-shadow:var(--shadow)}
+.more-btn:active{transform:translateY(0)}
+.more-btn .n{color:var(--gold);font-weight:700}
+
+/* ── 섹션 사이 호흡 ─────────────────────────────────────── */
+.container > .sec:first-child{margin-top:64px}
+@media (min-width:1000px){.container > .sec:first-child{margin-top:84px}}
+
 </style>
 </head>
 <body>
@@ -1055,6 +1168,8 @@ footer .fnote{font-size:13.5px}
 
 <!-- HERO -->
 <section class="hero">
+  <div class="hero-bg" aria-hidden="true"></div>
+  <div class="hero-tint" aria-hidden="true"></div>
   <div class="hero-in">
     <div class="hero-a">
       <div class="hero-guide">
@@ -1076,6 +1191,7 @@ footer .fnote{font-size:13.5px}
       <div class="mind-chips" id="mindChips"></div>
     </div>
   </div>
+  <div class="scroll-cue" aria-hidden="true"><span>Scroll</span><i></i></div>
 </section>
 
 <div class="container">
@@ -3408,6 +3524,163 @@ renderAll();
 
 /* 이미 로그인된 세션이면 곧바로 당겨온다 */
 setTimeout(function(){ if(me()) pullAll(); },900);
+
+})();
+</script>
+
+
+<script>
+/* ============================================================
+   랜딩 흐름 — 떠오르기 · 시차 · 점진적 공개
+   외부 라이브러리 없음. 스크롤 처리는 전부 rAF 로 묶는다.
+   ============================================================ */
+(function(){
+"use strict";
+
+var q  = function(s,r){ return (r||document).querySelector(s); };
+var qa = function(s,r){ return Array.prototype.slice.call((r||document).querySelectorAll(s)); };
+var reduce = false;
+try{ reduce = matchMedia("(prefers-reduced-motion:reduce)").matches; }catch(_){}
+
+/* ── 1. 스크롤에 따라 떠오르기 ───────────────────────────── */
+(function reveal(){
+  if(!("IntersectionObserver" in window)) return;
+
+  // 한 덩어리로 묶여 올라와야 자연스러운 것들
+  qa(".sec, .hero-guide, .snc, .contact-card, footer .fin").forEach(function(el){
+    el.setAttribute("data-reveal","");
+  });
+  // 여러 개가 줄지어 있는 것은 아주 짧은 시차를 준다
+  [[".dom-card",55],[".entry",40],[".mchip",26]].forEach(function(pair){
+    qa(pair[0]).forEach(function(el,i){
+      el.setAttribute("data-reveal","");
+      el.style.setProperty("--d", Math.min(i,7) * pair[1] + "ms");
+    });
+  });
+
+  // 여기까지 왔으면 관찰이 가능하다는 뜻이므로 그때 비로소 숨긴다
+  document.documentElement.classList.add("js-reveal");
+
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(en){
+      if(!en.isIntersecting) return;
+      en.target.classList.add("in");
+      io.unobserve(en.target);          // 한 번 떠오르면 끝. 되감지 않는다.
+    });
+  }, { rootMargin: "0px 0px -8% 0px", threshold: 0.06 });
+
+  function observeAll(){
+    qa("[data-reveal]:not(.in)").forEach(function(el){ io.observe(el); });
+  }
+  observeAll();
+
+  // 첫 화면 안에 있는 것은 기다리지 않고 바로 보여 준다.
+  // rAF 는 화면을 그리지 않는 환경에서 굶을 수 있어 타이머를 쓴다.
+  setTimeout(function(){
+    var vh = window.innerHeight || document.documentElement.clientHeight || 900;
+    qa("[data-reveal]").forEach(function(el){
+      if(el.getBoundingClientRect().top < vh * 0.92) el.classList.add("in");
+    });
+  }, 0);
+
+  // 감시 장치 — 1.2초가 지나도 아무것도 떠오르지 않았다면
+  // 관찰이 동작하지 않는 환경이다. 효과를 버리고 내용을 살린다.
+  setTimeout(function(){
+    if(document.querySelector("[data-reveal].in")) return;
+    document.documentElement.classList.remove("js-reveal");
+    if(io) io.disconnect();
+  }, 1200);
+
+  window.SalvReveal = { refresh: observeAll };
+})();
+
+/* ── 2. 히어로 사진 시차 ─────────────────────────────────── */
+(function parallax(){
+  var bg = q(".hero-bg"), hero = q(".hero"), cue = q(".scroll-cue");
+  if(!bg || !hero) return;
+  if(reduce) return;
+
+  var ticking = false, heroH = hero.offsetHeight;
+  addEventListener("resize", function(){ heroH = hero.offsetHeight; }, { passive:true });
+
+  function frame(){
+    ticking = false;
+    var y = window.scrollY || window.pageYOffset || 0;
+    if(y <= heroH + 80){
+      // 배경이 본문보다 느리게 움직인다 — 깊이가 생긴다
+      bg.style.transform = "translate3d(0," + (y * 0.16).toFixed(1) + "px,0)";
+    }
+    if(cue) cue.classList.toggle("gone", y > 60);
+  }
+  addEventListener("scroll", function(){
+    if(ticking) return;
+    ticking = true;
+    requestAnimationFrame(frame);
+  }, { passive:true });
+  frame();
+})();
+
+/* ── 3. 긴 목록은 내려갈수록 펼친다 ──────────────────────── */
+/* 58편을 한 번에 쌓아 두면 6,900px 짜리 벽이 된다.
+   처음엔 조금만 보이고, 스크롤이 닿으면 이어서 붙는다. */
+function progressive(hostSel, step, label){
+  var host = q(hostSel);
+  if(!host || !("IntersectionObserver" in window)) return;
+
+  var wrap = document.createElement("div");
+  wrap.className = "more-wrap";
+  wrap.hidden = true;
+  var btn = document.createElement("button");
+  btn.className = "more-btn";
+  btn.type = "button";
+  wrap.appendChild(btn);
+  host.parentNode.insertBefore(wrap, host.nextSibling);
+
+  var shown = step, io = null, busy = false;
+
+  function items(){
+    return qa(":scope > .entry", host);
+  }
+  function apply(){
+    var list = items();
+    list.forEach(function(el, i){ el.hidden = i >= shown; });
+    var rest = list.length - shown;
+    if(rest > 0){
+      wrap.hidden = false;
+      btn.innerHTML = label + ' <span class="n">' + rest + "</span>편 더 보기";
+      if(!io){
+        io = new IntersectionObserver(function(es){
+          es.forEach(function(e){ if(e.isIntersecting) more(); });
+        }, { rootMargin: "420px 0px" });
+        io.observe(wrap);
+      }
+    }else{
+      wrap.hidden = true;
+      if(io){ io.disconnect(); io = null; }
+    }
+    if(window.SalvReveal) window.SalvReveal.refresh();
+  }
+  function more(){
+    if(busy) return;
+    busy = true;
+    shown += step;
+    apply();
+    setTimeout(function(){ busy = false; }, 120);   // 한 번에 여러 번 붙는 것 방지
+  }
+  btn.addEventListener("click", more);
+
+  // 검색·필터로 목록이 다시 그려지면 처음부터
+  new MutationObserver(function(){
+    shown = step;
+    if(io){ io.disconnect(); io = null; }
+    apply();
+  }).observe(host, { childList:true });
+
+  apply();
+}
+
+progressive(".entries", 12, "말씀");
+progressive("#philList", 9, "글");
 
 })();
 </script>
