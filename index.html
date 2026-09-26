@@ -35,7 +35,7 @@
 <meta name="twitter:image" content="./og.jpg">
 <meta name="robots" content="index,follow,max-image-preview:large">
 <link rel="canonical" href="./">
-<meta name="salv-build" content="20260923-0957">
+<meta name="salv-build" content="20260926-1158">
 <script>
 /* 배포한 새 화면이 예전 캐시에 막히는 일을 없앤다.
    문서에 박힌 빌드 번호와 네트워크의 version.json 을 비교해
@@ -1046,21 +1046,50 @@ footer .fnote{font-size:13.5px}
 .hero-tint{
   position:absolute; inset:0; z-index:-2; pointer-events:none;
   background:
-    radial-gradient(110% 80% at 50% 8%, color-mix(in srgb,var(--hero-1) 52%,transparent), transparent 70%),
+    radial-gradient(120% 92% at 50% 20%, color-mix(in srgb,var(--hero-1) 40%,transparent), transparent 74%),
     linear-gradient(180deg,
-      color-mix(in srgb,var(--hero-2) 62%,transparent) 0%,
-      color-mix(in srgb,var(--hero-2) 80%,transparent) 42%,
-      color-mix(in srgb,var(--hero-2) 95%,transparent) 78%,
+      color-mix(in srgb,var(--hero-2) 50%,transparent) 0%,
+      color-mix(in srgb,var(--hero-2) 56%,transparent) 30%,
+      color-mix(in srgb,var(--hero-2) 68%,transparent) 55%,
+      color-mix(in srgb,var(--hero-2) 86%,transparent) 80%,
       var(--hero-2) 100%);
 }
 .hero-in{position:relative;z-index:1}
 
+/* 히어로가 헤더 뒤까지 올라온다 — 사진이 화면 맨 위에서 시작한다.
+   --hdr-h 는 스크립트가 실제 높이로 채운다. 값이 없어도 근삿값으로 동작한다. */
+:root{--hdr-h:112px}
+.hero{margin-top:calc(-1 * var(--hdr-h))}
+.hero-in{padding-top:calc(52px + var(--hdr-h))}
+
 @media (min-width:900px){
-  .hero-in{min-height:min(86vh,820px);padding:88px 22px 104px}
+  /* 내용이 끝난 뒤 남던 297px 의 빈 어둠을 걷어냈다 */
+  /* min-height 를 두면 화면이 길수록 내용 아래에 죽은 공간이 남는다.
+     여백으로만 높이를 정해 어떤 화면 높이에서도 공백이 생기지 않게 한다. */
+  .hero-in{padding-bottom:76px}
 }
 @media (max-width:899px){
-  .hero-in{padding:58px 22px 84px}
+  .hero-in{padding-left:22px;padding-right:22px;padding-bottom:56px}
 }
+
+/* 글이 놓이는 자리에만 따로 장막을 덮는다.
+   전체를 어둡게 하지 않고도 글이 읽히고, 가운데 종탑은 드러난 채로 둔다. */
+.hero-in::before{
+  content:""; position:absolute; inset:0; z-index:-1; pointer-events:none;
+  background:linear-gradient(100deg,
+    color-mix(in srgb,var(--hero-2) 68%,transparent) 0%,
+    color-mix(in srgb,var(--hero-2) 40%,transparent) 36%,
+    transparent 64%);
+}
+@media (max-width:899px){
+  .hero-in::before{
+    background:linear-gradient(180deg,
+      color-mix(in srgb,var(--hero-2) 58%,transparent) 0%,
+      color-mix(in srgb,var(--hero-2) 34%,transparent) 52%,
+      transparent 88%);
+  }
+}
+.hero h1,.hero .lead{text-shadow:0 1px 20px rgba(24,7,12,.42)}
 
 /* ── 아래로 내려가라는 신호 ──────────────────────────────── */
 .scroll-cue{
@@ -1136,8 +1165,46 @@ html.js-reveal [data-reveal].in{opacity:1;transform:none}
 .more-btn .n{color:var(--gold);font-weight:700}
 
 /* ── 섹션 사이 호흡 ─────────────────────────────────────── */
-.container > .sec:first-child{margin-top:64px}
-@media (min-width:1000px){.container > .sec:first-child{margin-top:84px}}
+/* 히어로가 이미 여백을 갖고 끝난다. 바로 아래까지 비워 둘 이유가 없다.
+   .container 의 첫 자식은 숨겨진 #result 라 :first-child 로는 잡히지 않는다. */
+.container > .pair-grid{margin-top:36px}
+.container > .pair-grid > .sec{margin-top:0}
+@media (min-width:1000px){.container > .pair-grid{margin-top:44px}}
+
+/* ============ 헤더 : 히어로 위에서는 투명하게 ============ */
+header.top,.navwrap,.brand .nm,.nav a,.acct-btn,.tbtn{
+  transition:background-color .4s ease, border-color .4s ease, color .4s ease;
+}
+html.at-top header.top{
+  background:transparent; border-bottom-color:transparent;
+  backdrop-filter:none; -webkit-backdrop-filter:none;
+}
+html.at-top .navwrap{
+  background:transparent;
+  border-top-color:rgba(243,233,221,.14);
+}
+html.at-top .brand .nm{color:var(--on-wine)}
+html.at-top .brand svg path{stroke:var(--gold-2)}
+html.at-top .nav a{color:color-mix(in srgb,var(--on-wine) 76%,transparent)}
+html.at-top .nav a:hover{color:var(--gold-2)}
+html.at-top .nav a[aria-current="true"]{color:var(--gold-2)}
+html.at-top .nav a::after{background:var(--gold-2)}
+html.at-top .acct-btn,
+html.at-top .tbtn{
+  background:rgba(243,233,221,.10);
+  border-color:rgba(243,233,221,.24);
+  color:var(--on-wine);
+}
+html.at-top .acct-btn:hover,
+html.at-top .tbtn:hover{border-color:var(--gold-2);color:var(--gold-2)}
+html.at-top .acct-btn.in{
+  background:rgba(194,163,101,.18);
+  border-color:rgba(194,163,101,.45);
+  color:var(--gold-2);
+}
+@media (prefers-reduced-motion:reduce){
+  header.top,.navwrap,.brand .nm,.nav a,.acct-btn,.tbtn{transition:none}
+}
 
 </style>
 </head>
@@ -3595,6 +3662,46 @@ try{ reduce = matchMedia("(prefers-reduced-motion:reduce)").matches; }catch(_){}
 })();
 
 /* ── 2. 히어로 사진 시차 ─────────────────────────────────── */
+/* 헤더 높이를 실제로 재서 히어로가 그만큼 위로 올라오게 한다 */
+(function headerFit(){
+  var hdr = q("header.top");
+  if(!hdr) return;
+  function fit(){
+    document.documentElement.style.setProperty("--hdr-h", Math.round(hdr.offsetHeight) + "px");
+  }
+  fit();
+  addEventListener("resize", fit, { passive:true });
+  if(window.ResizeObserver) new ResizeObserver(fit).observe(hdr);
+})();
+
+/* 히어로 위에 떠 있는 동안에는 헤더를 버건디에 맞춘다 */
+(function headerTone(){
+  var hdr = q("header.top"), hero = q(".hero");
+  if(!hdr || !hero) return;
+  var root = document.documentElement;
+  var hdrH = 0, heroEnd = 0;
+
+  // 스크롤마다 레이아웃을 읽지 않도록 경계를 미리 재 둔다
+  function measure(){
+    hdrH = hdr.offsetHeight;
+    heroEnd = hero.offsetTop + hero.offsetHeight;
+    tone();
+  }
+  // rAF 로 감싸지 않는다. 한 번이라도 프레임이 건너뛰면
+  // 래치가 잠긴 채 헤더가 영영 바뀌지 않는다. 계산은 뺄셈뿐이라 그대로 돌려도 싸다.
+  function tone(){
+    var y = window.scrollY || window.pageYOffset || 0;
+    root.classList.toggle("at-top", (y + hdrH + 4) < heroEnd);
+  }
+
+  measure();
+  addEventListener("scroll", tone, { passive:true });
+  addEventListener("resize", measure, { passive:true });
+  addEventListener("load", measure);
+  setTimeout(measure, 150);
+  setTimeout(measure, 700);   // 글꼴이 늦게 붙어 높이가 달라지는 경우
+})();
+
 (function parallax(){
   var bg = q(".hero-bg"), hero = q(".hero"), cue = q(".scroll-cue");
   if(!bg || !hero) return;
@@ -3616,6 +3723,8 @@ try{ reduce = matchMedia("(prefers-reduced-motion:reduce)").matches; }catch(_){}
     if(ticking) return;
     ticking = true;
     requestAnimationFrame(frame);
+    // 프레임이 오지 않아도 래치가 풀리게 한다. 시차는 못 줘도 멈춰 버리진 않는다.
+    setTimeout(function(){ ticking = false; }, 260);
   }, { passive:true });
   frame();
 })();
