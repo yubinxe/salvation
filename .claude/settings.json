@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ -f docs/WORKLOG.md ] && sed -n '1,60p' docs/WORKLOG.md; exit 0"
+          }
+        ]
+      }
+    ]
+  }
+}
